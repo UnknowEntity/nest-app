@@ -2,29 +2,17 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import configuration from './configuration/configuration';
-import { ConfigurationInterface } from './configuration/configuration.interface';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
     }),
-    DatabaseModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory(config: ConfigService<ConfigurationInterface>) {
-        const databaseConfig = config.getOrThrow('database', {
-          infer: true,
-        });
-
-        return {
-          connectionString: databaseConfig.connection_string,
-          ssl: databaseConfig.ssl,
-        };
-      },
-    }),
+    DatabaseModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

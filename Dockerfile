@@ -29,7 +29,10 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 
 # Install only production dependencies
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
+
+# Set environment variables to change to production mode
+ENV NODE_ENV=production
 
 # Expose the application port
 EXPOSE 3000

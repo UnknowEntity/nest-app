@@ -1,25 +1,34 @@
 import { Module } from '@nestjs/common';
 import { DatabaseService } from './database.service';
-import {
-  ConfigurableDatabaseModule,
-  DATABASE_OPTIONS_TOKEN,
-} from './database.module-definition';
-import { DatabaseModuleOptions } from './database.module-interface';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { startupLogger } from 'src/logger/logger';
 import { sql } from 'drizzle-orm';
+import { GlobalCache } from './cache';
+import { ConfigurationInterface } from 'src/configuration/configuration.interface';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { isProduction } from 'src/utils/app.util';
 
 @Module({
+  imports: [ConfigModule],
   providers: [
     {
       provide: DatabaseService,
-      inject: [DATABASE_OPTIONS_TOKEN],
-      useFactory(options: DatabaseModuleOptions) {
+      inject: [ConfigService],
+      useFactory(config: ConfigService<ConfigurationInterface>) {
+        const databaseConfig = config.getOrThrow('database', {
+          infer: true,
+        });
+
+        if (isProduction() && !databaseConfig.redis_connection_string) {
+          throw new Error('Redis connection string is required in production');
+        }
+
         const database = drizzle({
           connection: {
-            connectionString: options.connectionString,
-            ssl: options.ssl || false,
+            connectionString: databaseConfig.connection_string,
+            ssl: databaseConfig.ssl || false,
           },
+          cache: new GlobalCache(databaseConfig.redis_connection_string, false),
         });
 
         try {
@@ -42,4 +51,4 @@ import { sql } from 'drizzle-orm';
   ],
   exports: [DatabaseService],
 })
-export class DatabaseModule extends ConfigurableDatabaseModule {}
+export class DatabaseModule {}

@@ -1,12 +1,12 @@
 import * as toml from 'toml';
 import { ConfigurationData } from './configuration.interface';
-import { TOML_CONFIG_PATH } from 'src/constants/application.constant';
 import { TomlParseError } from 'src/interfaces/error.interface';
 import { startupLogger } from 'src/logger/logger';
 import { readFileSync } from 'node:fs';
+import { getTomlConfig } from 'src/constants/application.constant';
 
 export default () => {
-  const configData = readFileSync(TOML_CONFIG_PATH, 'utf-8');
+  const configData = readFileSync(getTomlConfig(), 'utf-8');
   let config: Record<string, unknown>;
 
   try {
@@ -26,7 +26,7 @@ export default () => {
   }
 
   startupLogger.info('Configuration loaded successfully', {
-    configPath: TOML_CONFIG_PATH,
+    configPath: getTomlConfig(),
     module: 'Configuration',
   });
 

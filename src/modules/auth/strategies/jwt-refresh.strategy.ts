@@ -2,17 +2,17 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigurationInterface } from 'src/configuration/configuration.interface';
-import { AccessTokenPayload } from 'src/interfaces/auth.interface';
+import { RefreshTokenPayload } from 'src/interfaces/auth.interface';
 import { DatabaseService } from 'src/database/database.service';
-import { JWT_ACCESS_STRATEGY_NAME } from 'src/constants/auth.constant';
+import { JWT_REFRESH_STRATEGY_NAME } from 'src/constants/auth.constant';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
 import { UserIdNotFoundError } from 'src/interfaces/error.interface';
 
 @Injectable()
-export class JwtAccessStrategy extends PassportStrategy(
+export class JwtRefreshStrategy extends PassportStrategy(
   Strategy,
-  JWT_ACCESS_STRATEGY_NAME,
+  JWT_REFRESH_STRATEGY_NAME,
 ) {
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
@@ -22,17 +22,22 @@ export class JwtAccessStrategy extends PassportStrategy(
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.getOrThrow('auth.access.secret', {
+      secretOrKey: configService.getOrThrow('auth.refresh.secret', {
         infer: true,
       }),
     });
   }
 
-  async validate(payload: AccessTokenPayload) {
+  async validate(payload: RefreshTokenPayload) {
     const user = await this.authService.getUserById(payload.sub);
+
     if (!user) {
       throw new UserIdNotFoundError();
     }
-    return user;
+
+    return {
+      ...user,
+      familyId: payload.familyId,
+    };
   }
 }

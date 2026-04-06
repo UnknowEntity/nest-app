@@ -15,6 +15,7 @@ const AuthSchema = zod.object({
   refresh: zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
+    max_expires_in: zod.number(),
   }),
   forgot_password: zod.object({
     secret: zod.base64().min(44),

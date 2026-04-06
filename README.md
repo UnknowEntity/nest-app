@@ -103,7 +103,7 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 - [x] Cache
 - [x] Authentication
-  - [ ] Revolving Refresh Token
+  - [x] Revolving Refresh Token
 - [ ] Authorization
 - [ ] Email
 - [ ] Business Logic

@@ -5,6 +5,7 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './configuration/configuration';
 import { AuthnModule } from './modules/authn/authn.module';
+import { AuthzModule } from './modules/authz/authz.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuthnModule } from './modules/authn/authn.module';
     }),
     DatabaseModule,
     AuthnModule,
+    AuthzModule,
   ],
   controllers: [AppController],
   providers: [AppService],

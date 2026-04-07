@@ -1,4 +1,5 @@
 import * as p from 'drizzle-orm/pg-core';
+import { casbinRulePostgres } from 'drizzle-adapter';
 
 export const users = p.pgTable('users', {
   id: p.serial().primaryKey(),
@@ -26,6 +27,9 @@ export const refreshTokens = p.pgTable('refresh_tokens', {
     .timestamp('updated_at', { mode: 'date', precision: 3 })
     .$onUpdate(() => new Date()),
 });
+
+// Reexport casbinRulePostgres as casbinTable to create migration for it
+export const casbinTable = casbinRulePostgres;
 
 export type SelectUser = typeof users.$inferSelect;
 export type RequestUser = Omit<SelectUser, 'password'>;

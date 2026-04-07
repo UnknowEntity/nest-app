@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { DatabaseModule } from 'src/database/database.module';
-import { AuthService } from './auth.service';
+import { AuthnService } from './authn.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
-import { AuthController } from './auth.controller';
+import { AuthnController } from './authn.controller';
 import { ConfigModule } from '@nestjs/config';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -22,11 +22,11 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
     ConfigModule,
   ],
   providers: [
-    AuthService,
+    AuthnService,
     LocalStrategy,
     JwtAccessStrategy,
     JwtRefreshStrategy,
   ],
-  controllers: [AuthController],
+  controllers: [AuthnController],
 })
-export class AuthModule {}
+export class AuthnModule {}

@@ -1,15 +1,15 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local.guard';
-import { AuthService } from './auth.service';
+import { AuthnService } from './authn.service';
 import { Token, User } from 'src/decorators/auth.decorator';
 import { RequestUser } from 'src/database/schema';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { RefreshRequestUser } from './auth.dto';
+import { RefreshRequestUser } from './authn.dto';
 
 @Controller('auth')
-export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+export class AuthnController {
+  constructor(private readonly authService: AuthnService) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('login')

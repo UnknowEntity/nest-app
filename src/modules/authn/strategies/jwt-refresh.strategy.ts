@@ -6,7 +6,7 @@ import { RefreshTokenPayload } from 'src/interfaces/auth.interface';
 import { DatabaseService } from 'src/database/database.service';
 import { JWT_REFRESH_STRATEGY_NAME } from 'src/constants/auth.constant';
 import { ConfigService } from '@nestjs/config';
-import { AuthService } from '../auth.service';
+import { AuthnService } from '../authn.service';
 import { UserIdNotFoundError } from 'src/interfaces/error.interface';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
     private readonly db: DatabaseService,
-    private readonly authService: AuthService,
+    private readonly authnService: AuthnService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -29,7 +29,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(payload: RefreshTokenPayload) {
-    const user = await this.authService.getUserById(payload.sub);
+    const user = await this.authnService.getUserById(payload.sub);
 
     if (!user) {
       throw new UserIdNotFoundError();

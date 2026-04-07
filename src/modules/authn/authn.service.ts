@@ -6,7 +6,7 @@ import { Scrypt } from 'src/utils/crypto.util';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigurationInterface } from 'src/configuration/configuration.interface';
 import { ConfigService } from '@nestjs/config';
-import { CreateRefreshTokenDto } from './auth.dto';
+import { CreateRefreshTokenDto } from './authn.dto';
 import { getCurrentUnixTimestamp, toUnixTimestamp } from 'src/utils/time.util';
 import {
   RefreshTokenFamilyInvalidError,
@@ -14,7 +14,7 @@ import {
 } from 'src/interfaces/error.interface';
 
 @Injectable()
-export class AuthService {
+export class AuthnService {
   constructor(
     private readonly db: DatabaseService,
     private readonly jwtService: JwtService,

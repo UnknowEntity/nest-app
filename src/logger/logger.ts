@@ -1,6 +1,8 @@
 import { ROOT_DIR } from 'src/constants/application.constant';
 import { createLogger, format, transports } from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
+const DailyRotateFile =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('winston-daily-rotate-file') as typeof import('winston-daily-rotate-file');
 
 export const MasterLogger = createLogger({
   transports: [

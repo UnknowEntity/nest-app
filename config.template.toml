@@ -1,0 +1,12 @@
+[database]
+connection_string = "postgresql://<username>:<password>@localhost:5432/<database>"
+ssl = false
+
+# JWT secrets and expiration times for different token types
+# Access tokens are short-lived and used for authenticating API requests (30 minutes)
+# Forgot password tokens are short-lived and used for resetting passwords (30 minutes)
+# Refresh tokens are long-lived and used for obtaining new access tokens (24 hours) and max 30 days for refresh token rotation
+[auth]
+access = {secret = "<access_secret>", expires_in = 1800}
+forgot_password = {secret = "<forgot_password_secret>", expires_in = 1800}
+refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000}

@@ -12,6 +12,8 @@ import {
   RefreshTokenFamilyInvalidError,
   RefreshTokenMaxAgeExceededError,
 } from 'src/interfaces/error.interface';
+import dayjs from 'dayjs';
+import { REFRESH_TOKEN_USAGE_BUFFER } from 'src/constants/auth.constant';
 
 @Injectable()
 export class AuthnService {
@@ -112,6 +114,7 @@ export class AuthnService {
         .select({
           token: refreshTokens.token,
           maxExpiresAt: refreshTokens.maxExpiresAt,
+          createdAt: refreshTokens.createdAt,
         })
         .from(refreshTokens)
         .where(
@@ -123,7 +126,15 @@ export class AuthnService {
 
       // If the provided token doesn't match the latest token in the family,
       // it means the family has been compromised.
-      if (!latestRefreshToken || latestRefreshToken.token !== token) {
+      if (
+        !latestRefreshToken ||
+        // We add a buffer to prevent token reuse due to
+        // slight time differences between token generation and validation.
+        (dayjs()
+          .add(REFRESH_TOKEN_USAGE_BUFFER, 'second')
+          .isAfter(dayjs(latestRefreshToken.createdAt)) &&
+          latestRefreshToken.token !== token)
+      ) {
         await this.db
           .delete(refreshTokens)
           .where(

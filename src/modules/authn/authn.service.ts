@@ -12,8 +12,14 @@ import {
   RefreshTokenFamilyInvalidError,
   RefreshTokenMaxAgeExceededError,
 } from 'src/interfaces/error.interface';
-import dayjs from 'dayjs';
-import { REFRESH_TOKEN_USAGE_BUFFER } from 'src/constants/auth.constant';
+const isSameOrBefore =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('dayjs/plugin/isSameOrBefore') as typeof import('dayjs/plugin/isSameOrBefore');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const dayjs = require('dayjs') as typeof import('dayjs');
+import { REFRESH_TOKEN_GRACE_PERIOD_BUFFER } from 'src/constants/auth.constant';
+
+dayjs.extend(isSameOrBefore);
 
 @Injectable()
 export class AuthnService {
@@ -106,76 +112,107 @@ export class AuthnService {
     userId,
     withFamily,
   }: CreateRefreshTokenDto) {
-    // If withFamily is provided, it means we are trying to reuse an existing refresh token family.
-    if (withFamily) {
-      const { id, token } = withFamily;
-
-      const [latestRefreshToken] = await this.db
-        .select({
-          token: refreshTokens.token,
-          maxExpiresAt: refreshTokens.maxExpiresAt,
-          createdAt: refreshTokens.createdAt,
-        })
-        .from(refreshTokens)
-        .where(
-          and(eq(refreshTokens.userId, userId), eq(refreshTokens.familyId, id)),
-        )
-        .orderBy(sql`${refreshTokens.createdAt} DESC`)
-        .limit(1)
-        .execute();
-
-      // If the provided token doesn't match the latest token in the family,
-      // it means the family has been compromised.
-      if (
-        !latestRefreshToken ||
-        // We add a buffer to prevent token reuse due to
-        // slight time differences between token generation and validation.
-        (dayjs()
-          .add(REFRESH_TOKEN_USAGE_BUFFER, 'second')
-          .isAfter(dayjs(latestRefreshToken.createdAt)) &&
-          latestRefreshToken.token !== token)
-      ) {
-        await this.db
-          .delete(refreshTokens)
-          .where(
-            and(
-              eq(refreshTokens.userId, userId),
-              eq(refreshTokens.familyId, id),
-            ),
-          )
-          .execute();
-
-        throw new RefreshTokenFamilyInvalidError();
-      }
-
-      // If the latest refresh token in the family has expired,
-      // we also consider the family compromised and delete it.
-      if (getCurrentUnixTimestamp() > latestRefreshToken.maxExpiresAt) {
-        await this.db
-          .delete(refreshTokens)
-          .where(
-            and(
-              eq(refreshTokens.userId, userId),
-              eq(refreshTokens.familyId, id),
-            ),
-          )
-          .execute();
-
-        throw new RefreshTokenMaxAgeExceededError();
-      }
-    } else {
-      // If withFamily is not provided, we create a new refresh token family.
-      withFamily = {
-        id: crypto.randomUUID(),
-        token: '',
-      };
+    // New family: create a fresh token
+    if (!withFamily) {
+      return this.generateAndStoreNewToken(userId, crypto.randomUUID());
     }
 
+    // Existing family: validate and check grace period
+    const { isLatestToken, latestTokenData, withinGracePeriod } =
+      await this.validateAndCheckGracePeriod(userId, withFamily);
+
+    // Stale token retried within grace period: return the latest token.
+    // This makes refresh idempotent for client retries/network races.
+    if (withinGracePeriod && !isLatestToken) {
+      return latestTokenData.token;
+    }
+
+    // Latest token reuse (inside or outside grace period): rotate to a new token.
+    return this.generateAndStoreNewToken(userId, withFamily.id);
+  }
+
+  private async validateAndCheckGracePeriod(
+    userId: number,
+    withFamily: { id: string; token: string },
+  ) {
+    const latestTokenData = await this.fetchLatestFamilyToken(
+      userId,
+      withFamily.id,
+    );
+
+    // Family doesn't exist
+    if (!latestTokenData) {
+      await this.removeRefreshTokenFamily(userId, withFamily.id);
+      throw new RefreshTokenFamilyInvalidError();
+    }
+
+    // Check if family has exceeded max age
+    if (getCurrentUnixTimestamp() > latestTokenData.maxExpiresAt) {
+      await this.removeRefreshTokenFamily(userId, withFamily.id);
+      throw new RefreshTokenMaxAgeExceededError();
+    }
+
+    // Check if request is within grace period of last token rotation
+    const withinGracePeriod = this.isWithinGracePeriod(
+      latestTokenData.createdAt,
+    );
+    const isLatestToken = latestTokenData.token === withFamily.token;
+
+    // Token mismatch outside grace period = potential compromise (replay attack)
+    if (!withinGracePeriod && !isLatestToken) {
+      await this.removeRefreshTokenFamily(userId, withFamily.id);
+      throw new RefreshTokenFamilyInvalidError();
+    }
+
+    return { isLatestToken, latestTokenData, withinGracePeriod };
+  }
+
+  private async fetchLatestFamilyToken(
+    userId: number,
+    familyId: string,
+  ): Promise<{
+    token: string;
+    maxExpiresAt: number;
+    createdAt: Date | null;
+  } | null> {
+    const [result] = await this.db
+      .select({
+        token: refreshTokens.token,
+        maxExpiresAt: refreshTokens.maxExpiresAt,
+        createdAt: refreshTokens.createdAt,
+      })
+      .from(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.userId, userId),
+          eq(refreshTokens.familyId, familyId),
+        ),
+      )
+      .orderBy(sql`${refreshTokens.createdAt} DESC`)
+      .limit(1)
+      .execute();
+
+    return result || null;
+  }
+
+  private isWithinGracePeriod(tokenCreatedAt: Date | null): boolean {
+    if (!tokenCreatedAt) {
+      return false;
+    }
+    return dayjs().isSameOrBefore(
+      dayjs(tokenCreatedAt).add(REFRESH_TOKEN_GRACE_PERIOD_BUFFER, 'second'),
+    );
+  }
+
+  private async generateAndStoreNewToken(
+    userId: number,
+    familyId: string,
+  ): Promise<string> {
     const refresh = this.configService.getOrThrow('auth.refresh', {
       infer: true,
     });
 
-    const payload = { sub: userId, familyId: withFamily.id };
+    const payload = { sub: userId, familyId };
     const token = await this.jwtService.signAsync(payload, {
       secret: refresh.secret,
       expiresIn: refresh.expires_in,
@@ -183,7 +220,7 @@ export class AuthnService {
 
     await this.db.insert(refreshTokens).values({
       userId,
-      familyId: withFamily.id,
+      familyId,
       token,
       maxExpiresAt: toUnixTimestamp(
         new Date(Date.now() + refresh.max_expires_in * 1000),
@@ -191,5 +228,17 @@ export class AuthnService {
     });
 
     return token;
+  }
+
+  private async removeRefreshTokenFamily(userId: number, familyId: string) {
+    await this.db
+      .delete(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.userId, userId),
+          eq(refreshTokens.familyId, familyId),
+        ),
+      )
+      .execute();
   }
 }

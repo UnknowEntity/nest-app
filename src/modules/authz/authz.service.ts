@@ -3,8 +3,7 @@ import { Enforcer, newEnforcer } from 'casbin';
 import { DatabaseService } from 'src/database/database.service';
 import DrizzleAdapter, { casbinRulePostgres } from 'drizzle-adapter';
 import { getFilePath } from 'src/utils/app.util';
-
-const CONFIG_FILENAME = 'rbac_model.conf';
+import { CONFIG_FILENAME } from 'src/constants/auth.constant';
 
 @Injectable()
 export class AuthzService implements OnModuleInit {
@@ -33,5 +32,29 @@ export class AuthzService implements OnModuleInit {
     action: string,
   ): Promise<boolean> {
     return this.enforcer.enforce(subject, object, action);
+  }
+
+  async addUserToRole(userId: string, roleName: string) {
+    await this.enforcer.addGroupingPolicy(userId, roleName);
+  }
+
+  async removeUserFromRole(userId: string, roleName: string) {
+    await this.enforcer.removeGroupingPolicy(userId, roleName);
+  }
+
+  async addPermissionToRole(roleName: string, object: string, action: string) {
+    await this.enforcer.addPolicy(roleName, object, action);
+  }
+
+  async removePermissionFromRole(
+    roleName: string,
+    object: string,
+    action: string,
+  ) {
+    await this.enforcer.removePolicy(roleName, object, action);
+  }
+
+  async getRolePermissions(roleName: string) {
+    return this.enforcer.getPermissionsForUser(roleName);
   }
 }

@@ -1,4 +1,5 @@
 import { SelectUser } from 'src/database/schema';
+import { Request } from 'express';
 
 export type AccessTokenPayload = {
   sub: number; // user ID

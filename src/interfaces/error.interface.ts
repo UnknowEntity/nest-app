@@ -23,3 +23,12 @@ export class RefreshTokenFamilyInvalidError extends UnauthorizedException {
 export class UserIdNotFoundError extends UnauthorizedException {
   code = 'USER_ID_NOT_FOUND';
 }
+
+export class JwtInvalidError extends UnauthorizedException {
+  code = 'JWT_INVALID';
+}
+
+export class InvalidCredentialsError extends UnauthorizedException {
+  // Keep it vague to prevent user enumeration
+  code = 'INVALID_CREDENTIALS';
+}

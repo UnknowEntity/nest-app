@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JWT_REFRESH_STRATEGY_NAME } from 'src/constants/auth.constant';
+import { JwtInvalidError } from 'src/interfaces/error.interface';
 
 @Injectable()
 export class JwtRefreshGuard extends AuthGuard(JWT_REFRESH_STRATEGY_NAME) {
@@ -8,7 +9,7 @@ export class JwtRefreshGuard extends AuthGuard(JWT_REFRESH_STRATEGY_NAME) {
   handleRequest(err: any, user: any, info: any): any {
     // You can throw an exception based on either "info" or "err" arguments
     if (err || !user) {
-      throw err || new UnauthorizedException();
+      throw err || new JwtInvalidError();
     }
     return user;
   }

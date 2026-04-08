@@ -1,8 +1,8 @@
 import { ROOT_DIR } from 'src/constants/application.constant';
 import { createLogger, format, transports } from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
-export const Logger = createLogger({
+export const MasterLogger = createLogger({
   transports: [
     new transports.Console({
       level: 'info',
@@ -12,21 +12,19 @@ export const Logger = createLogger({
         format.errors({ stack: true }),
         format.printf(
           ({
-            timestamp,
             level,
             message,
             ...meta
           }: {
-            timestamp: string;
             level: string;
-            message: string;
+            message: unknown;
             [key: string]: unknown;
           }) => {
-            const { label, ...rest } = meta;
+            const { label, timestamp, ...rest } = meta;
             const metaString =
               Object.keys(rest).length > 0 ? JSON.stringify(rest) : '';
 
-            return `${timestamp} [${typeof label === 'string' ? label : 'App'}] [${level}]: ${message} ${metaString}`;
+            return `${String(timestamp)} [${typeof label === 'string' ? label : 'App'}] [${level}]: ${String(message)} ${metaString}`;
           },
         ),
       ),
@@ -42,4 +40,4 @@ export const Logger = createLogger({
   ],
 });
 
-export const startupLogger = Logger.child({ label: 'Startup' });
+export const startupLogger = MasterLogger.child({ label: 'Startup' });

@@ -5,22 +5,36 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775052277617,
-      "tag": "0000_silky_synch",
+      "when": 1775656346675,
+      "tag": "0000_add_seed_metadata",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1775481985283,
-      "tag": "0001_add_refresh_token_table",
+      "when": 1775656369427,
+      "tag": "0001_add_roles",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1775570128086,
-      "tag": "0002_casbin_rule",
+      "when": 1775656417207,
+      "tag": "0002_add_user",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775656446896,
+      "tag": "0003_add_casbin_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775656462614,
+      "tag": "0004_add_refresh_token_table",
       "breakpoints": true
     }
   ]

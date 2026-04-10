@@ -16,13 +16,18 @@ export class AuthzGuard implements CanActivate {
 
     const object = request.url;
     const action = request.method;
-    const subject = request.user.id.toString();
+    const subject = request.user.role;
     const isValid = await this.authzService.enforce(subject, object, action);
 
     if (!isValid) {
       this.authzLogger.warn(
         `Access denied for user ${subject} on ${object} with action ${action}`,
-        { path: request.path, method: request.method, userId: subject },
+        {
+          path: request.path,
+          method: request.method,
+          userRole: subject,
+          email: request.user.email,
+        },
       );
     }
 

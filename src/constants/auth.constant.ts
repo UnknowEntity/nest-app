@@ -17,3 +17,10 @@ export const CONFIG_FILENAME = 'rbac_model.conf';
  * and triggers family invalidation and denial.
  */
 export const REFRESH_TOKEN_GRACE_PERIOD_BUFFER = 30; // 30 seconds
+
+// Default roles to seed into the database
+// These roles cannot be deleted and are used as fallbacks for users with missing/invalid roles
+export enum DefaultRole {
+  Admin = 'admin',
+  Guest = 'guest',
+}

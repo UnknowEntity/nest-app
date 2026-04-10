@@ -6,18 +6,22 @@ import { Scrypt } from 'src/utils/crypto.util';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigurationInterface } from 'src/configuration/configuration.interface';
 import { ConfigService } from '@nestjs/config';
-import { CreateRefreshTokenDto } from './authn.dto';
+import { CreateRefreshTokenDto, ReqSignUpDto } from './authn.dto';
 import { getCurrentUnixTimestamp, toUnixTimestamp } from 'src/utils/time.util';
 import {
   RefreshTokenFamilyInvalidError,
   RefreshTokenMaxAgeExceededError,
+  UserAlreadyExistsError,
 } from 'src/interfaces/error.interface';
 const isSameOrBefore =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('dayjs/plugin/isSameOrBefore') as typeof import('dayjs/plugin/isSameOrBefore');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const dayjs = require('dayjs') as typeof import('dayjs');
-import { REFRESH_TOKEN_GRACE_PERIOD_BUFFER } from 'src/constants/auth.constant';
+import {
+  DefaultRole,
+  REFRESH_TOKEN_GRACE_PERIOD_BUFFER,
+} from 'src/constants/auth.constant';
 
 dayjs.extend(isSameOrBefore);
 
@@ -94,6 +98,43 @@ export class AuthnService {
       .execute();
 
     return user;
+  }
+
+  async signup(dto: ReqSignUpDto) {
+    // Query only the 'id' column to minimize data retrieval
+    // since we only need to check existence
+    const existingUser = await this.db
+      .select({
+        id: users.id,
+      })
+      .from(users)
+      .where(eq(users.email, dto.email))
+      .limit(1)
+      .execute();
+
+    if (existingUser.length > 0) {
+      throw new UserAlreadyExistsError();
+    }
+
+    const hashedPassword = await Scrypt.hash(dto.password);
+
+    const [newUser] = await this.db
+      .insert(users)
+      .values({
+        email: dto.email,
+        name: dto.name,
+        password: hashedPassword,
+        role: DefaultRole.Guest, // default role
+      })
+      .returning({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+      })
+      .execute();
+
+    return newUser;
   }
 
   private async createAccessToken(userId: number) {

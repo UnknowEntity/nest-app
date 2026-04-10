@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 
 export class TomlParseError extends Error {
   line: number;
@@ -31,4 +31,8 @@ export class JwtInvalidError extends UnauthorizedException {
 export class InvalidCredentialsError extends UnauthorizedException {
   // Keep it vague to prevent user enumeration
   code = 'INVALID_CREDENTIALS';
+}
+
+export class UserAlreadyExistsError extends BadRequestException {
+  code = 'USER_ALREADY_EXISTS';
 }

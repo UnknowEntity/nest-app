@@ -15,7 +15,7 @@ export type RefreshRequestUser = RequestUser & {
 };
 
 export const ReqSignUpSchema = zod.object({
-  email: zod.email(),
+  email: zod.email().transform((str) => str.trim().toLowerCase()),
   name: zod.string().min(2).max(50),
   password: zod
     .string()

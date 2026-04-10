@@ -1,12 +1,29 @@
+# Main runtime configuration for the API.
+# Copy this file to config.toml and replace placeholder values.
+
 [database]
+# PostgreSQL connection string used by Drizzle/Nest at runtime.
+# Format: postgresql://<username>:<password>@<host>:<port>/<database>
 connection_string = "postgresql://<username>:<password>@localhost:5432/<database>"
+
+# Enable TLS for database connection.
+# false: local development (typical)
+# true: managed/prod database with SSL enabled
 ssl = false
 
-# JWT secrets and expiration times for different token types
-# Access tokens are short-lived and used for authenticating API requests (30 minutes)
-# Forgot password tokens are short-lived and used for resetting passwords (30 minutes)
-# Refresh tokens are long-lived and used for obtaining new access tokens (24 hours) and max 30 days for refresh token rotation
 [auth]
+# Access token settings (used for API authentication).
+# secret: Base64 string, minimum 44 chars (validated by schema)
+# expires_in: token lifetime in seconds (1800 = 30 minutes)
 access = {secret = "<access_secret>", expires_in = 1800}
+
+# Forgot-password token settings.
+# secret: Base64 string, minimum 44 chars
+# expires_in: token lifetime in seconds (1800 = 30 minutes)
 forgot_password = {secret = "<forgot_password_secret>", expires_in = 1800}
+
+# Refresh token settings (used to mint new access tokens).
+# secret: Base64 string, minimum 44 chars
+# expires_in: refresh token JWT lifetime in seconds (86400 = 24 hours)
+# max_expires_in: max family lifetime in seconds for token rotation (2592000 = 30 days)
 refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000}

@@ -1,3 +1,4 @@
+import * as zod from 'zod';
 export const LOCAL_STRATEGY_NAME = 'local';
 export const JWT_ACCESS_STRATEGY_NAME = 'jwt-access';
 export const JWT_REFRESH_STRATEGY_NAME = 'jwt-refresh';
@@ -24,3 +25,13 @@ export enum DefaultRole {
   Admin = 'admin',
   Guest = 'guest',
 }
+
+// Validation schema for user passwords, used in both seeding and user registration
+export const PASSWORD_POLICY = zod
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(15, 'Password cannot exceed 15 characters')
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Must contain at least one number')
+  .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character');

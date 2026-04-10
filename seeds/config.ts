@@ -3,17 +3,11 @@ import * as zod from 'zod';
 import * as toml from 'toml';
 import { readFileSync } from 'fs';
 import { TomlParseError } from 'src/interfaces/error.interface';
+import { PASSWORD_POLICY } from 'src/constants/auth.constant';
 
 export const SeedConfigSchema = zod.object({
   seeds_value: zod.object({
-    admin_password: zod
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(15, 'Password cannot exceed 15 characters')
-      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Must contain at least one number')
-      .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character'),
+    admin_password: PASSWORD_POLICY,
   }),
 });
 

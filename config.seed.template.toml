@@ -1,2 +1,8 @@
+# Seed runtime configuration.
+# Copy this file to config.seed.toml and replace placeholder values.
+
 [seeds_value]
+# Initial admin password used by seed scripts.
+# Must satisfy the application's password policy.
+# Example policy (current): 8-15 chars with upper/lowercase, number, and special char.
 admin_password = "<admin_password>"

@@ -36,3 +36,7 @@ export class InvalidCredentialsError extends UnauthorizedException {
 export class UserAlreadyExistsError extends BadRequestException {
   code = 'USER_ALREADY_EXISTS';
 }
+
+export class RoleNotAvailableError extends BadRequestException {
+  code = 'ROLE_NOT_AVAILABLE';
+}

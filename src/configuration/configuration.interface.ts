@@ -1,5 +1,9 @@
 import * as zod from 'zod';
 
+const AppConfigSchema = zod.object({
+  csrf_secret: zod.base64().min(44),
+});
+
 const DatabaseSchema = zod.object({
   connection_string: zod.string(),
   ssl: zod.boolean().optional(),
@@ -30,6 +34,7 @@ const RateLimitSchema = zod.object({
 });
 
 export const ConfigurationData = zod.object({
+  app: AppConfigSchema,
   database: DatabaseSchema,
   auth: AuthSchema,
   rate_limit: RateLimitSchema,

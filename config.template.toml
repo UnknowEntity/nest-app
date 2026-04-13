@@ -1,6 +1,13 @@
 # Main runtime configuration for the API.
 # Copy this file to config.toml and replace placeholder values.
 
+[app]
+# Application environment (e.g., development, production).
+
+# CSRF secret used for generating CSRF tokens.
+# Must be a Base64 string with a minimum length of 44 characters (256 bits).
+csrf_secret = "<csrf_secret>"
+
 [database]
 # PostgreSQL connection string used by Drizzle/Nest at runtime.
 # Format: postgresql://<username>:<password>@<host>:<port>/<database>

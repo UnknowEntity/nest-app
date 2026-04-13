@@ -35,3 +35,6 @@ export const PASSWORD_POLICY = zod
   .regex(/[a-z]/, 'Must contain at least one lowercase letter')
   .regex(/[0-9]/, 'Must contain at least one number')
   .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character');
+
+export const DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT = 5;
+export const DEFAULT_LOCKOUT_DURATION_SECONDS = 15 * 60;

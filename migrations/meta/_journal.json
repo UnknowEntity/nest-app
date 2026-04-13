@@ -36,6 +36,13 @@
       "when": 1776050199235,
       "tag": "0004_add_refresh_token",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776083667266,
+      "tag": "0005_add_lockout_column",
+      "breakpoints": true
     }
   ]
 }

@@ -8,7 +8,10 @@ import { ConfigurationInterface } from 'src/configuration/configuration.interfac
 import { ConfigService } from '@nestjs/config';
 import { CreateRefreshTokenDto, ReqSignUpDto } from './authn.dto';
 import { getCurrentUnixTimestamp, toUnixTimestamp } from 'src/utils/time.util';
+import { SelectUser } from '../../database/schema';
 import {
+  AccountLockedError,
+  AccountLockedWarningError,
   RefreshTokenFamilyInvalidError,
   RefreshTokenMaxAgeExceededError,
   UserAlreadyExistsError,
@@ -19,6 +22,8 @@ const isSameOrBefore =
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const dayjs = require('dayjs') as typeof import('dayjs');
 import {
+  DEFAULT_LOCKOUT_DURATION_SECONDS,
+  DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT,
   DefaultRole,
   REFRESH_TOKEN_GRACE_PERIOD_BUFFER,
 } from 'src/constants/auth.constant';
@@ -41,21 +46,87 @@ export class AuthnService {
       .select()
       .from(users)
       .where(eq(users.email, email))
+      .$withCache()
       .execute();
 
     if (!user) {
       return null;
     }
 
+    // Check for lockout before validating password.
+    if (user.lockoutUntil && user.lockoutUntil > getCurrentUnixTimestamp()) {
+      throw new AccountLockedError(
+        user.lockoutUntil - getCurrentUnixTimestamp(),
+      );
+    }
+
     const isPasswordValid = await Scrypt.verify(password, user.password);
+
     if (!isPasswordValid) {
+      await this.updateFailedLoginAttempts(user.id, user.signInAttempts ?? 0);
+
+      // If the failed attempt has just reached the lockout threshold,
+      // throw a warning error to indicate there one more failed attempt will lock the account.
+      if (user.signInAttempts === DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT - 1) {
+        throw new AccountLockedWarningError();
+      }
+
       return null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = user;
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      password: hashPassword,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      lockoutUntil,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      signInAttempts,
+      ...result
+    } = user;
+
+    if (user.signInAttempts && user.signInAttempts > 0) {
+      await this.db
+        .update(users)
+        .set({
+          signInAttempts: 0,
+          lockoutUntil: null,
+        })
+        .where(eq(users.id, user.id))
+        .execute();
+    }
 
     return result;
+  }
+
+  async updateFailedLoginAttempts(userId: number, attempts: number) {
+    const currentAttempts = attempts + 1;
+    const updateData: Partial<SelectUser> = {
+      signInAttempts: currentAttempts,
+    };
+
+    // If attempts exceed threshold, set lockoutUntil with exponential backoff.
+    if (currentAttempts > DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT) {
+      const maxLogoutUntil = toUnixTimestamp(
+        dayjs().add(DEFAULT_LOCKOUT_DURATION_SECONDS, 'second').toDate(),
+      );
+      const lockoutUntil = toUnixTimestamp(
+        dayjs()
+          .add(
+            // Start with 1s lockout after threshold is exceeded,
+            // then double for each subsequent attempt
+            2 ** (currentAttempts - DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT - 1),
+            'second',
+          )
+          .toDate(),
+      );
+      updateData.lockoutUntil = Math.min(lockoutUntil, maxLogoutUntil);
+    }
+
+    await this.db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .execute();
   }
 
   async login(user: RequestUser) {

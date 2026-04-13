@@ -31,6 +31,8 @@ export const users = p.pgTable('users', {
     .varchar('role', { length: 255 })
     .notNull()
     .references(() => roles.id),
+  lockoutUntil: p.integer('lockout_until'),
+  signInAttempts: p.integer('sign_in_attempts').default(0),
   ...metaColumn,
 });
 
@@ -61,6 +63,9 @@ export const refreshTokens = p.pgTable(
 );
 
 export type SelectUser = typeof users.$inferSelect;
-export type RequestUser = Omit<SelectUser, 'password'>;
+export type RequestUser = Omit<
+  SelectUser,
+  'password' | 'lockoutUntil' | 'signInAttempts'
+>;
 export type SelectRefreshToken = typeof refreshTokens.$inferSelect;
 export type RequestRefreshToken = Omit<SelectRefreshToken, 'token'>;

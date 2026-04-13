@@ -40,3 +40,18 @@ export class UserAlreadyExistsError extends BadRequestException {
 export class RoleNotAvailableError extends BadRequestException {
   code = 'ROLE_NOT_AVAILABLE';
 }
+
+export class AccountLockedWarningError extends UnauthorizedException {
+  code = 'ACCOUNT_LOCKED_WARNING';
+  message =
+    'One more failed login attempt will lock your account. Please try again later.';
+}
+
+export class AccountLockedError extends UnauthorizedException {
+  code = 'ACCOUNT_LOCKED';
+  constructor(remainingLockoutSeconds: number) {
+    super(
+      `Account is locked. Please try again after ${remainingLockoutSeconds} seconds.`,
+    );
+  }
+}

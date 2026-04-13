@@ -29,15 +29,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       secretOrKey: configService.getOrThrow('auth.refresh.secret', {
         infer: true,
       }),
-      issuer: configService.getOrThrow('auth.refresh.issuer', {
-        infer: true,
-      }),
-      audience: configService.getOrThrow('auth.refresh.audience', {
-        infer: true,
-      }),
-      algorithms: configService.getOrThrow('auth.refresh.algorithms', {
-        infer: true,
-      }),
+      ...authnService.getTokenSharedClaims(),
     });
   }
 

@@ -22,13 +22,15 @@ ssl = false
 # cache_ttl_ms = 60000
 
 [auth]
+# Shared JWT claim settings for access and refresh tokens.
+issuer = "kubernetes-node"
+audience = "kubernetes-node-api"
+algorithms = ["HS256"]
+
 # Access token settings (used for API authentication).
 # secret: Base64 string, minimum 44 chars (validated by schema)
 # expires_in: token lifetime in seconds (1800 = 30 minutes)
-# issuer: expected token issuer
-# audience: expected token audience
-# algorithms: allowed signing algorithms
-access = {secret = "<access_secret>", expires_in = 1800, issuer = "kubernetes-node", audience = "kubernetes-node-api", algorithms = ["HS256"]}
+access = {secret = "<access_secret>", expires_in = 1800}
 
 # Forgot-password token settings.
 # secret: Base64 string, minimum 44 chars
@@ -39,7 +41,7 @@ forgot_password = {secret = "<forgot_password_secret>", expires_in = 1800}
 # secret: Base64 string, minimum 44 chars
 # expires_in: refresh token JWT lifetime in seconds (86400 = 24 hours)
 # max_expires_in: max family lifetime in seconds for token rotation (2592000 = 30 days)
-refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000, issuer = "kubernetes-node", audience = "kubernetes-node-api", algorithms = ["HS256"]}
+refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000}
 
 [rate_limit]
 # Rate limiting settings for API requests.

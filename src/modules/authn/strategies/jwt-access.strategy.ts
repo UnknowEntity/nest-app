@@ -29,15 +29,7 @@ export class JwtAccessStrategy extends PassportStrategy(
       secretOrKey: configService.getOrThrow('auth.access.secret', {
         infer: true,
       }),
-      issuer: configService.getOrThrow('auth.access.issuer', {
-        infer: true,
-      }),
-      audience: configService.getOrThrow('auth.access.audience', {
-        infer: true,
-      }),
-      algorithms: configService.getOrThrow('auth.access.algorithms', {
-        infer: true,
-      }),
+      ...authnService.getTokenSharedClaims(),
     });
   }
 

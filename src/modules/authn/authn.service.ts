@@ -221,7 +221,21 @@ export class AuthnService {
       .execute();
   }
 
+  getTokenSharedClaims() {
+    const auth = this.configService.getOrThrow('auth', {
+      infer: true,
+    });
+
+    return {
+      issuer: auth.issuer,
+      audience: auth.audience,
+      algorithms: auth.algorithms,
+    };
+  }
+
   private async createAccessToken(userId: number) {
+    const { algorithms, ...sharedClaims } = this.getTokenSharedClaims();
+
     const access = this.configService.getOrThrow('auth.access', {
       infer: true,
     });
@@ -233,9 +247,8 @@ export class AuthnService {
     return this.jwtService.signAsync(payload, {
       secret: access.secret,
       expiresIn: access.expires_in,
-      issuer: access.issuer,
-      audience: access.audience,
-      algorithm: access.algorithms[0],
+      ...sharedClaims,
+      algorithm: algorithms[0],
       jwtid: crypto.randomUUID(),
     });
   }
@@ -340,6 +353,7 @@ export class AuthnService {
     userId: number,
     familyId: string,
   ): Promise<string> {
+    const { algorithms, ...sharedClaims } = this.getTokenSharedClaims();
     const refresh = this.configService.getOrThrow('auth.refresh', {
       infer: true,
     });
@@ -348,9 +362,8 @@ export class AuthnService {
     const token = await this.jwtService.signAsync(payload, {
       secret: refresh.secret,
       expiresIn: refresh.expires_in,
-      issuer: refresh.issuer,
-      audience: refresh.audience,
-      algorithm: refresh.algorithms[0],
+      ...sharedClaims,
+      algorithm: algorithms[0],
       jwtid: crypto.randomUUID(),
     });
 

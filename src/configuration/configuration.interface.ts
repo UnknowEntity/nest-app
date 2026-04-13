@@ -28,20 +28,17 @@ const JwtAlgorithmSchema = zod.enum([
 
 // Set min to ensure a strong secret (32 bytes = 44 base64 characters)
 const AuthSchema = zod.object({
+  issuer: zod.string().min(1),
+  audience: zod.string().min(1),
+  algorithms: zod.array(JwtAlgorithmSchema).nonempty(),
   access: zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
-    issuer: zod.string().min(1),
-    audience: zod.string().min(1),
-    algorithms: zod.array(JwtAlgorithmSchema).nonempty(),
   }),
   refresh: zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
     max_expires_in: zod.number(),
-    issuer: zod.string().min(1),
-    audience: zod.string().min(1),
-    algorithms: zod.array(JwtAlgorithmSchema).nonempty(),
   }),
   forgot_password: zod.object({
     secret: zod.base64().min(44),

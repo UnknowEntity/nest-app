@@ -166,6 +166,7 @@ Status below reflects current source code implementation.
 - [x] Structured exception filters for HTTP and validation errors
 
 - [ ] Rate limiting (global and/or per-route)
+  - [x] Rate limit implementation
   - [ ] Rate limit test
 - [x] Login timeout increment / account lockout after failed attempts
 - [ ] Email workflow (verification / forgot password / reset)

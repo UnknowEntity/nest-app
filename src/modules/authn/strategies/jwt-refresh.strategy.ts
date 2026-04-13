@@ -3,7 +3,6 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigurationInterface } from 'src/configuration/configuration.interface';
 import { RefreshTokenPayload } from 'src/interfaces/auth.interface';
-import { DatabaseService } from 'src/database/database.service';
 import { JWT_REFRESH_STRATEGY_NAME } from 'src/constants/auth.constant';
 import { ConfigService } from '@nestjs/config';
 import { AuthnService } from '../authn.service';
@@ -16,7 +15,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
-    private readonly db: DatabaseService,
     private readonly authnService: AuthnService,
   ) {
     super({

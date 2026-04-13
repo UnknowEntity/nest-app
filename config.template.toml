@@ -30,3 +30,12 @@ forgot_password = {secret = "<forgot_password_secret>", expires_in = 1800}
 # expires_in: refresh token JWT lifetime in seconds (86400 = 24 hours)
 # max_expires_in: max family lifetime in seconds for token rotation (2592000 = 30 days)
 refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000}
+
+[rate_limit]
+# Rate limiting settings for API requests.
+# max_requests_per_window: maximum number of requests allowed per IP address within the time window.
+max_requests_per_window = 100
+
+# ttl_seconds: time window for rate limiting in seconds (3600 = 1 hour). 
+# After this time, the request count for each IP address will reset.
+ttl_seconds = 3600 # Time window for rate limiting (3600 = 1 hour)

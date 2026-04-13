@@ -24,9 +24,15 @@ const AuthSchema = zod.object({
   }),
 });
 
+const RateLimitSchema = zod.object({
+  ttl_seconds: zod.number().int().positive(),
+  max_requests_per_window: zod.number().int().positive(),
+});
+
 export const ConfigurationData = zod.object({
   database: DatabaseSchema,
   auth: AuthSchema,
+  rate_limit: RateLimitSchema,
 });
 
 export type ConfigurationInterface = zod.infer<typeof ConfigurationData>;

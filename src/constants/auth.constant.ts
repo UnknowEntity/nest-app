@@ -38,3 +38,10 @@ export const PASSWORD_POLICY = zod
 
 export const DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT = 5;
 export const DEFAULT_LOCKOUT_DURATION_SECONDS = 15 * 60;
+
+export const AuthnThrottleConfig = {
+  // 15 minutes window for login attempts
+  ttl: 15 * 60,
+  // Allow max 5 login attempts within the window before throttling
+  limit: 5,
+};

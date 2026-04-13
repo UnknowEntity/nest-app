@@ -16,11 +16,14 @@ import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { RefreshRequestUser, ReqSignUpDto, ReqSignUpSchema } from './authn.dto';
 import { ZodValidationPipe } from 'src/pipes/validation.pipe';
+import { Throttle } from '@nestjs/throttler';
+import { AuthnThrottleConfig } from 'src/constants/auth.constant';
 
 @Controller('auth')
 export class AuthnController {
   constructor(private readonly authService: AuthnService) {}
 
+  @Throttle({ default: AuthnThrottleConfig })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   login(@User() user: RequestUser) {

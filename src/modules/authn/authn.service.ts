@@ -222,14 +222,21 @@ export class AuthnService {
   }
 
   private async createAccessToken(userId: number) {
-    const payload = { sub: userId };
+    const access = this.configService.getOrThrow('auth.access', {
+      infer: true,
+    });
+    const payload = {
+      sub: userId,
+      type: 'access' as const,
+    };
+
     return this.jwtService.signAsync(payload, {
-      secret: this.configService.getOrThrow('auth.access.secret', {
-        infer: true,
-      }),
-      expiresIn: this.configService.getOrThrow('auth.access.expires_in', {
-        infer: true,
-      }),
+      secret: access.secret,
+      expiresIn: access.expires_in,
+      issuer: access.issuer,
+      audience: access.audience,
+      algorithm: access.algorithms[0],
+      jwtid: crypto.randomUUID(),
     });
   }
 
@@ -337,10 +344,14 @@ export class AuthnService {
       infer: true,
     });
 
-    const payload = { sub: userId, familyId };
+    const payload = { sub: userId, familyId, type: 'refresh' as const };
     const token = await this.jwtService.signAsync(payload, {
       secret: refresh.secret,
       expiresIn: refresh.expires_in,
+      issuer: refresh.issuer,
+      audience: refresh.audience,
+      algorithm: refresh.algorithms[0],
+      jwtid: crypto.randomUUID(),
     });
 
     await this.db.insert(refreshTokens).values({

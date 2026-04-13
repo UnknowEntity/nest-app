@@ -11,16 +11,37 @@ const DatabaseSchema = zod.object({
   cache_ttl_ms: zod.number().int().positive().optional(),
 });
 
+const JwtAlgorithmSchema = zod.enum([
+  'HS256',
+  'HS384',
+  'HS512',
+  'RS256',
+  'RS384',
+  'RS512',
+  'ES256',
+  'ES384',
+  'ES512',
+  'PS256',
+  'PS384',
+  'PS512',
+]);
+
 // Set min to ensure a strong secret (32 bytes = 44 base64 characters)
 const AuthSchema = zod.object({
   access: zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
+    issuer: zod.string().min(1),
+    audience: zod.string().min(1),
+    algorithms: zod.array(JwtAlgorithmSchema).nonempty(),
   }),
   refresh: zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
     max_expires_in: zod.number(),
+    issuer: zod.string().min(1),
+    audience: zod.string().min(1),
+    algorithms: zod.array(JwtAlgorithmSchema).nonempty(),
   }),
   forgot_password: zod.object({
     secret: zod.base64().min(44),

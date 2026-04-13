@@ -170,8 +170,8 @@ Status below reflects current source code implementation.
   - [ ] Rate limit test
 - [x] Login timeout increment / account lockout after failed attempts
 - [ ] Email workflow (verification / forgot password / reset)
-- [ ] HTTP hardening middleware (Helmet, strict CORS policy)
-- [ ] JWT claim hardening (issuer, audience, allowed algorithms)
+- [x] HTTP hardening middleware (Helmet, strict CORS policy)
+- [x] JWT claim hardening (issuer, audience, allowed algorithms)
 - [x] Explicit logout/revocation endpoint for active refresh token/session
 - [ ] Security-focused test coverage for authn/authz paths
 

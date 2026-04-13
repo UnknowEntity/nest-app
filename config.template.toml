@@ -11,6 +11,9 @@ connection_string = "postgresql://<username>:<password>@localhost:5432/<database
 # true: managed/prod database with SSL enabled
 ssl = false
 
+# Cache TTL in milliseconds for Drizzle query caching (default: 60000 = 1 minute).
+# cache_ttl_ms = 60000
+
 [auth]
 # Access token settings (used for API authentication).
 # secret: Base64 string, minimum 44 chars (validated by schema)

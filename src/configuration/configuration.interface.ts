@@ -4,6 +4,7 @@ const DatabaseSchema = zod.object({
   connection_string: zod.string(),
   ssl: zod.boolean().optional(),
   redis_connection_string: zod.string().optional(),
+  cache_ttl_ms: zod.number().int().positive().optional(),
 });
 
 // Set min to ensure a strong secret (32 bytes = 44 base64 characters)

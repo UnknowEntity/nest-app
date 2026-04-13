@@ -95,6 +95,7 @@ export class AuthnService {
       .from(users)
       .where(eq(users.id, id))
       .limit(1)
+      .$withCache()
       .execute();
 
     return user;

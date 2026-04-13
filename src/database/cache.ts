@@ -7,7 +7,7 @@ import { is } from 'drizzle-orm';
 import { Cache } from 'drizzle-orm/cache/core';
 
 export class GlobalCache extends Cache {
-  private globalTtl: number = 1000;
+  private globalTtl: number;
   private useGlobally: boolean;
 
   // Mirrors Drizzle's upstash key model for deterministic invalidation.
@@ -27,9 +27,10 @@ export class GlobalCache extends Cache {
 
   private cacheManager: CacheManager;
 
-  constructor(redisString?: string, useGlobally = false) {
+  constructor(redisString?: string, useGlobally = false, globalTtl = 60_000) {
     super();
     this.useGlobally = useGlobally;
+    this.globalTtl = globalTtl;
     const store = redisString ? createKeyvRedis(redisString) : createKeyv();
     this.cacheManager = createCache(store);
   }

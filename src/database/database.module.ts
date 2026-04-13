@@ -28,7 +28,11 @@ import { isProduction } from 'src/utils/app.util';
             connectionString: databaseConfig.connection_string,
             ssl: databaseConfig.ssl || false,
           },
-          cache: new GlobalCache(databaseConfig.redis_connection_string, false),
+          cache: new GlobalCache(
+            databaseConfig.redis_connection_string,
+            false,
+            databaseConfig.cache_ttl_ms,
+          ),
         });
 
         try {

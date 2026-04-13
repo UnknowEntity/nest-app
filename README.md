@@ -170,7 +170,7 @@ Status below reflects current source code implementation.
 - [ ] Email workflow (verification / forgot password / reset)
 - [ ] HTTP hardening middleware (Helmet, strict CORS policy)
 - [ ] JWT claim hardening (issuer, audience, allowed algorithms)
-- [ ] Explicit logout/revocation endpoint for active refresh token/session
+- [x] Explicit logout/revocation endpoint for active refresh token/session
 - [ ] Security-focused test coverage for authn/authz paths
 
 ## Delivery Roadmap
@@ -178,6 +178,7 @@ Status below reflects current source code implementation.
 - [x] Cache
 - [x] Authentication
   - [x] Rotating Refresh Token
+  - [x] Logout (refresh token family revocation)
 - [x] Authorization
 - [ ] Rate Limit
 - [ ] Timeout Increment for Login

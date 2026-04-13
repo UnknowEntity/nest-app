@@ -138,6 +138,18 @@ export class AuthnService {
     return newUser;
   }
 
+  async logout(userId: number, familyId: string) {
+    await this.db
+      .delete(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.userId, userId),
+          eq(refreshTokens.familyId, familyId),
+        ),
+      )
+      .execute();
+  }
+
   private async createAccessToken(userId: number) {
     const payload = { sub: userId };
     return this.jwtService.signAsync(payload, {

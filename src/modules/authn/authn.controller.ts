@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   UseGuards,
   UsePipes,
@@ -41,5 +43,12 @@ export class AuthnController {
   @UsePipes(new ZodValidationPipe(ReqSignUpSchema))
   signup(@Body() body: ReqSignUpDto) {
     return this.authService.signup(body);
+  }
+
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtRefreshGuard)
+  @Get('logout')
+  logout(@User() user: RefreshRequestUser) {
+    return this.authService.logout(user.id, user.familyId);
   }
 }

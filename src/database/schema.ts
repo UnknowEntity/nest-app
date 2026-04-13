@@ -1,5 +1,6 @@
 import * as p from 'drizzle-orm/pg-core';
 import { casbinRulePostgres } from 'drizzle-adapter';
+import { sql } from 'drizzle-orm';
 
 const metaColumn = {
   createdAt: p.timestamp('created_at').defaultNow(),
@@ -36,18 +37,28 @@ export const users = p.pgTable('users', {
 // Reexport casbinRulePostgres as casbinTable to create migration for it
 export const casbinTable = casbinRulePostgres;
 
-export const refreshTokens = p.pgTable('refresh_tokens', {
-  id: p.serial().primaryKey(),
-  userId: p
-    .integer('user_id')
-    .notNull()
-    .references(() => users.id),
-  token: p.text().notNull(),
-  familyId: p.text().notNull(),
-  // Store as UNIX timestamp (in seconds) for easier comparison in queries
-  maxExpiresAt: p.integer('max_expires_at').notNull(),
-  ...metaColumn,
-});
+export const refreshTokens = p.pgTable(
+  'refresh_tokens',
+  {
+    id: p.serial().primaryKey(),
+    userId: p
+      .integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    token: p.text().notNull(),
+    familyId: p.uuid('family_id').notNull(),
+    // Store as UNIX timestamp (in seconds) for easier comparison in queries
+    maxExpiresAt: p.integer('max_expires_at').notNull(),
+    ...metaColumn,
+  },
+  (table) => {
+    return {
+      userIdFamilyIdIdx: p
+        .index('user_id_family_id_idx')
+        .on(table.userId, table.familyId, sql`${table.createdAt} DESC`),
+    };
+  },
+);
 
 export type SelectUser = typeof users.$inferSelect;
 export type RequestUser = Omit<SelectUser, 'password'>;

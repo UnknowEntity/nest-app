@@ -1,5 +1,5 @@
 {
-  "id": "bab3232f-ef8d-40f6-bced-e1f969d17031",
+  "id": "5e998248-d0b0-40b1-90b1-79d8bbdfc868",
   "prevId": "d6361b77-8ba1-4e31-b11e-fd9244b90154",
   "version": "7",
   "dialect": "postgresql",
@@ -87,9 +87,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "familyId": {
-          "name": "familyId",
-          "type": "text",
+        "family_id": {
+          "name": "family_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -113,7 +113,35 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "user_id_family_id_idx": {
+          "name": "user_id_family_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "family_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "\"created_at\" DESC",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "refresh_tokens_user_id_users_id_fk": {
           "name": "refresh_tokens_user_id_users_id_fk",

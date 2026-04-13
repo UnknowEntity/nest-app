@@ -33,8 +33,8 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1775656462614,
-      "tag": "0004_add_refresh_token_table",
+      "when": 1776050199235,
+      "tag": "0004_add_refresh_token",
       "breakpoints": true
     }
   ]

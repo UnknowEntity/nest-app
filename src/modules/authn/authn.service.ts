@@ -159,7 +159,8 @@ export class AuthnService {
 
   async getUserById(id: number): Promise<RequestUser | null> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userColumns } = getTableColumns(users);
+    const { password, lockoutUntil, signInAttempts, ...userColumns } =
+      getTableColumns(users);
 
     const [user] = await this.db
       .select(userColumns)

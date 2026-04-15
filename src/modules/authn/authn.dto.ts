@@ -22,3 +22,15 @@ export const ReqSignUpSchema = zod.object({
 });
 
 export type ReqSignUpDto = zod.infer<typeof ReqSignUpSchema>;
+
+export const ReqForgotPasswordSchema = zod.object({
+  email: zod.email().transform((str) => str.trim().toLowerCase()),
+});
+
+export type ReqForgotPasswordDto = zod.infer<typeof ReqForgotPasswordSchema>;
+
+export const ReqResetPasswordSchema = zod.object({
+  newPassword: PASSWORD_POLICY,
+});
+
+export type ReqResetPasswordDto = zod.infer<typeof ReqResetPasswordSchema>;

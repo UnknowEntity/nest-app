@@ -1,4 +1,8 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 export class TomlParseError extends Error {
   line: number;
@@ -20,6 +24,20 @@ export class RefreshTokenFamilyInvalidError extends UnauthorizedException {
   code = 'REFRESH_TOKEN_FAMILY_INVALID';
 }
 
+export class TokenReuseDetectedError extends BadRequestException {
+  code = 'TOKEN_REUSE_DETECTED';
+}
+
+export class TokenNotFoundError extends NotFoundException {
+  code = 'TOKEN_NOT_FOUND';
+}
+
+export class InvalidResetTokenError extends BadRequestException {
+  code = 'INVALID_RESET_TOKEN';
+}
+
+// This error is used when the user ID from the token does not correspond to any existing user in the database.
+// It indicates that the token is invalid or has been tampered with.
 export class UserIdNotFoundError extends UnauthorizedException {
   code = 'USER_ID_NOT_FOUND';
 }

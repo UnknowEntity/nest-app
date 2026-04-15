@@ -1,19 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { refreshTokens, RequestUser, users } from 'src/database/schema';
-import { and, eq, getTableColumns, sql } from 'drizzle-orm';
+import {
+  passwordResetTokens,
+  refreshTokens,
+  RequestUser,
+  users,
+} from 'src/database/schema';
+import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import { Scrypt } from 'src/utils/crypto.util';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigurationInterface } from 'src/configuration/configuration.interface';
 import { ConfigService } from '@nestjs/config';
-import { CreateRefreshTokenDto, ReqSignUpDto } from './authn.dto';
+import {
+  CreateRefreshTokenDto,
+  ReqForgotPasswordDto,
+  ReqSignUpDto,
+} from './authn.dto';
 import { getCurrentUnixTimestamp, toUnixTimestamp } from 'src/utils/time.util';
 import { SelectUser } from '../../database/schema';
 import {
   AccountLockedError,
   AccountLockedWarningError,
+  InvalidResetTokenError,
   RefreshTokenFamilyInvalidError,
   RefreshTokenMaxAgeExceededError,
+  TokenNotFoundError,
+  TokenReuseDetectedError,
   UserAlreadyExistsError,
 } from 'src/interfaces/error.interface';
 const isSameOrBefore =
@@ -27,6 +39,8 @@ import {
   DefaultRole,
   REFRESH_TOKEN_GRACE_PERIOD_BUFFER,
 } from 'src/constants/auth.constant';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MailEventConfig, MailEventEnum } from 'src/mail/mail.constant';
 
 dayjs.extend(isSameOrBefore);
 
@@ -36,6 +50,7 @@ export class AuthnService {
     private readonly db: DatabaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<ConfigurationInterface>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async validateUser(
@@ -222,6 +237,43 @@ export class AuthnService {
       .execute();
   }
 
+  async forgotPassword(dto: ReqForgotPasswordDto) {
+    const [user] = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+      })
+      .from(users)
+      .where(eq(users.email, dto.email))
+      .$withCache()
+      .execute();
+
+    // To prevent email enumeration, we return early even if the user doesn't exist.
+    // No error is thrown and the response is the same regardless of whether the email exists or not.
+    if (!user) {
+      return;
+    }
+
+    const { token, expiresAt } = await this.createForgotPasswordToken(user.id);
+
+    await this.db
+      .insert(passwordResetTokens)
+      .values({
+        userId: user.id,
+        hashToken: await Scrypt.hash(token),
+        expiresAt,
+      })
+      .execute();
+
+    // Fire-and-forget email sending. We don't want to make the user wait if the email service is slow.
+    this.eventEmitter.emit(MailEventConfig[MailEventEnum.ResetPassword].event, {
+      email: user.email,
+      name: user.name,
+      token,
+    });
+  }
+
   getTokenSharedClaims() {
     const auth = this.configService.getOrThrow('auth', {
       infer: true,
@@ -232,6 +284,103 @@ export class AuthnService {
       audience: auth.audience,
       algorithms: auth.algorithms,
     };
+  }
+
+  private async createForgotPasswordToken(
+    userId: number,
+  ): Promise<{ token: string; expiresAt: number }> {
+    const { algorithms, ...sharedClaims } = this.getTokenSharedClaims();
+
+    const forgotPassword = this.configService.getOrThrow(
+      'auth.forgot_password',
+      {
+        infer: true,
+      },
+    );
+
+    const payload = {
+      sub: userId,
+      type: 'reset' as const,
+    };
+
+    const token = await this.jwtService.signAsync(payload, {
+      secret: forgotPassword.secret,
+      expiresIn: forgotPassword.expires_in,
+      ...sharedClaims,
+      algorithm: algorithms[0],
+      jwtid: crypto.randomUUID(),
+    });
+
+    return {
+      token,
+      expiresAt: getCurrentUnixTimestamp() + forgotPassword.expires_in,
+    };
+  }
+
+  async resetPassword(userId: number, token: string, newPassword: string) {
+    const [resetToken] = await this.db
+      .select({
+        id: passwordResetTokens.id,
+        usedAt: passwordResetTokens.usedAt,
+        hashToken: passwordResetTokens.hashToken,
+      })
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.userId, userId))
+      .orderBy(sql`${passwordResetTokens.createdAt} DESC`)
+      .limit(1)
+      .execute();
+
+    if (!resetToken) {
+      throw new TokenNotFoundError();
+    }
+
+    const isTokenValid = await Scrypt.verify(token, resetToken.hashToken);
+
+    if (!isTokenValid) {
+      throw new InvalidResetTokenError();
+    }
+
+    if (resetToken.usedAt) {
+      throw new TokenReuseDetectedError();
+    }
+
+    await this.db.transaction(async (tx) => {
+      const [updateToken] = await tx
+        .update(passwordResetTokens)
+        .set({
+          usedAt: getCurrentUnixTimestamp(),
+        })
+        .where(
+          and(
+            eq(passwordResetTokens.id, resetToken.id),
+            isNull(passwordResetTokens.usedAt),
+          ),
+        )
+        .returning({
+          id: passwordResetTokens.id,
+        })
+        .execute();
+
+      if (!updateToken) {
+        throw new TokenReuseDetectedError();
+      }
+
+      const hashedPassword = await Scrypt.hash(newPassword);
+
+      await tx
+        .update(users)
+        .set({
+          password: hashedPassword,
+        })
+        .where(eq(users.id, userId))
+        .execute();
+
+      // Invalidate all existing sessions for this user to force reauth with new password
+      await tx
+        .delete(refreshTokens)
+        .where(eq(refreshTokens.userId, userId))
+        .execute();
+    });
   }
 
   private async createAccessToken(userId: number) {

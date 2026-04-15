@@ -19,6 +19,16 @@ export const RefreshTokenPayloadSchema = zod.object({
 
 export type RefreshTokenPayload = zod.infer<typeof RefreshTokenPayloadSchema>;
 
+export const ResetPasswordTokenPayloadSchema = zod.object({
+  sub: zod.number(),
+  jti: zod.string(),
+  type: zod.literal('reset'),
+});
+
+export type ResetPasswordTokenPayload = zod.infer<
+  typeof ResetPasswordTokenPayloadSchema
+>;
+
 export type AuthRequest = Request & {
   user: SelectUser;
 };

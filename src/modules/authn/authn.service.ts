@@ -41,6 +41,7 @@ import {
 } from 'src/constants/auth.constant';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailEventConfig, MailEventEnum } from 'src/mail/mail.constant';
+import { ResetPasswordEvent } from 'src/mail/mail.dto';
 
 dayjs.extend(isSameOrBefore);
 
@@ -267,11 +268,14 @@ export class AuthnService {
       .execute();
 
     // Fire-and-forget email sending. We don't want to make the user wait if the email service is slow.
-    this.eventEmitter.emit(MailEventConfig[MailEventEnum.ResetPassword].event, {
-      email: user.email,
-      name: user.name,
-      token,
-    });
+    this.eventEmitter.emit(
+      MailEventConfig[MailEventEnum.ResetPassword].event,
+      new ResetPasswordEvent({
+        name: user.name,
+        email: user.email,
+        token,
+      }),
+    );
   }
 
   getTokenSharedClaims() {

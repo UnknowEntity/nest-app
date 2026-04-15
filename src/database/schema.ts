@@ -62,6 +62,18 @@ export const refreshTokens = p.pgTable(
   },
 );
 
+export const passwordResetTokens = p.pgTable('password_reset_tokens', {
+  id: p.serial().primaryKey(),
+  userId: p
+    .integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  hashToken: p.text().notNull(),
+  expiresAt: p.integer('expires_at').notNull(),
+  usedAt: p.integer('used_at'),
+  ...metaColumn,
+});
+
 export type SelectUser = typeof users.$inferSelect;
 export type RequestUser = Omit<
   SelectUser,

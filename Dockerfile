@@ -28,6 +28,9 @@ COPY --from=build /app/dist ./dist
 # Copy package.json and package-lock.json to the working directory
 COPY --from=build /app/package*.json ./
 
+# Copy templates dir
+COPY --from=build /app/templates ./templates
+
 # Install only production dependencies
 RUN npm ci --omit=dev
 

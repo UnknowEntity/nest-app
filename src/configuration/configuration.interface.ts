@@ -51,14 +51,35 @@ const RateLimitSchema = zod.object({
   max_requests_per_window: zod.number().int().positive(),
 });
 
+const SmtpSchema = zod.object({
+  transport: zod.object({
+    host: zod.string().min(1),
+    port: zod.number().int().positive(),
+    user: zod.string().min(1),
+    pass: zod.string().min(1),
+  }),
+  from_address: zod.email(),
+  from_name: zod.string().optional(),
+});
+
+// General configuration that doesn't fit into other categories
+// Do not include sensitive information here
+// This can be used for things like application domain, feature flags, etc.
+const GeneralConfigSchema = zod.object({
+  domain: zod.string().min(1),
+});
+
 export const ConfigurationData = zod.object({
   app: AppConfigSchema,
   database: DatabaseSchema,
   auth: AuthSchema,
   rate_limit: RateLimitSchema,
+  smtp: SmtpSchema,
+  general: GeneralConfigSchema,
 });
 
 export type ConfigurationInterface = zod.infer<typeof ConfigurationData>;
 export type DatabaseConfig = zod.infer<typeof DatabaseSchema> & {
   useGlobalCache?: boolean;
 };
+export type GeneralConfig = zod.infer<typeof GeneralConfigSchema>;

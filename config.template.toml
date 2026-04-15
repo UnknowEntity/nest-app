@@ -51,3 +51,14 @@ max_requests_per_window = 100
 # ttl_seconds: time window for rate limiting in seconds (3600 = 1 hour). 
 # After this time, the request count for each IP address will reset.
 ttl_seconds = 3600 # Time window for rate limiting (3600 = 1 hour)
+
+[smtp]
+# SMTP configuration for sending emails (e.g., password reset emails).
+from_address = "<from_address>"
+from_name = "<from_name>"
+transport = {host = "<smtp_host>", port = 587, user = "<smtp_user>", pass = "<smtp_pass>"}
+
+[general]
+# General application settings.
+# Domain used for constructing URLs in emails (e.g., password reset links).
+domain = "https://<domain>"

@@ -10,9 +10,18 @@ export class AppController {
     private readonly csrfService: CsrfService,
   ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('health/ready')
+  getReady() {
+    return {
+      status: 'OK',
+    };
+  }
+
+  @Get('health/live')
+  isLive() {
+    return {
+      status: 'OK',
+    };
   }
 
   @Get('csrf-token')

@@ -33,6 +33,7 @@ export const users = p.pgTable('users', {
     .references(() => roles.id),
   lockoutUntil: p.integer('lockout_until'),
   signInAttempts: p.integer('sign_in_attempts').default(0),
+  verifiedAt: p.integer('verified_at'),
   ...metaColumn,
 });
 

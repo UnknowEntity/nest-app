@@ -1,5 +1,5 @@
 export class ResetPasswordEvent {
-  userName!: string;
+  name!: string;
   email!: string;
   token!: string;
 }

@@ -24,10 +24,10 @@ export class MailService {
   }
 
   async sendResetPasswordEmail(event: ResetPasswordEvent) {
-    const { email, token, userName } = event;
+    const { email, token, name } = event;
     await this.sendMail(email, MailEventEnum.ResetPassword, {
       token: encodeURIComponent(token),
-      userName,
+      name,
     });
   }
 

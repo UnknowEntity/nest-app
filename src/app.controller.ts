@@ -2,7 +2,13 @@ import { Controller, Get, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { CsrfService } from './csrf/csrf.service';
 import { Request, Response } from 'express';
+import {
+  SkipAuthnDecorator,
+  SkipAuthzDecorator,
+} from './decorators/auth.decorator';
 
+@SkipAuthnDecorator()
+@SkipAuthzDecorator()
 @Controller()
 export class AppController {
   constructor(

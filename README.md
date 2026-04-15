@@ -170,7 +170,7 @@ Status below reflects current source code implementation.
   - [ ] Rate limit test
 - [x] Login timeout increment / account lockout after failed attempts
 - [ ] Email workflow (verification / forgot password / reset)
-  - [ ] Email verification implementation
+  - [x] Email verification implementation
   - [x] Forgot password implementation
   - [x] Reset password implementation
   - [ ] Email workflow test
@@ -195,7 +195,7 @@ Use this as a verification ledger. Checkboxes are split between implementation r
 | Structured exception filters | [x] | [ ] |
 | Rate limiting (global/per-route) | [x] | [ ] |
 | Account lockout after failed attempts | [x] | [ ] |
-| Email verification flow | [ ] | [ ] |
+| Email verification flow | [x] | [ ] |
 | Forgot password flow | [x] | [ ] |
 | Reset password flow | [x] | [ ] |
 | HTTP hardening middleware (Helmet/CORS) | [x] | [ ] |

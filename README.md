@@ -1,4 +1,4 @@
-# kubernetes-node
+# nest-app
 
 NestJS API service with authentication, authorization, cache, and PostgreSQL/Drizzle persistence.
 

@@ -24,8 +24,8 @@ ssl = false
 [auth]
 # Shared JWT claim settings for access and refresh tokens.
 algorithms = ["HS256"]
-audience = "kubernetes-node-api"
-issuer = "kubernetes-node"
+audience = "nest-app-api"
+issuer = "nest-app"
 
 # Access token settings (used for API authentication).
 # secret: Base64 string, minimum 44 chars (validated by schema)

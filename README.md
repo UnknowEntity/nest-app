@@ -133,7 +133,7 @@ export async function execute(
 }
 ```
 
-3. Use `db` for inserts/updates and `config` for seed-time configuration.
+1. Use `db` for inserts/updates and `config` for seed-time configuration.
 
 ### Run Seeds
 
@@ -170,10 +170,38 @@ Status below reflects current source code implementation.
   - [ ] Rate limit test
 - [x] Login timeout increment / account lockout after failed attempts
 - [ ] Email workflow (verification / forgot password / reset)
+  - [ ] Email verification implementation
+  - [x] Forgot password implementation
+  - [x] Reset password implementation
+  - [ ] Email workflow test
 - [x] HTTP hardening middleware (Helmet, strict CORS policy)
 - [x] JWT claim hardening (issuer, audience, allowed algorithms)
 - [x] Explicit logout/revocation endpoint for active refresh token/session
 - [ ] Security-focused test coverage for authn/authz paths
+
+## Test Checklist (Per Security Part)
+
+Use this as a verification ledger. Checkboxes are split between implementation review and automated test validation.
+
+| Part | Implementation Rechecked | Automated Test Verified |
+| --- | --- | --- |
+| Config schema validation at startup | [x] | [ ] |
+| Strong auth secret validation (base64 + minimum length) | [x] | [ ] |
+| Password hashing and timing-safe comparison | [x] | [ ] |
+| Input validation via Zod DTO schemas | [x] | [ ] |
+| JWT access/refresh/reset strategies | [x] | [ ] |
+| Rotating refresh token family with grace period | [x] | [ ] |
+| Authorization guard with Casbin | [x] | [ ] |
+| Structured exception filters | [x] | [ ] |
+| Rate limiting (global/per-route) | [x] | [ ] |
+| Account lockout after failed attempts | [x] | [ ] |
+| Email verification flow | [ ] | [ ] |
+| Forgot password flow | [x] | [ ] |
+| Reset password flow | [x] | [ ] |
+| HTTP hardening middleware (Helmet/CORS) | [x] | [ ] |
+| JWT claim hardening (issuer/audience/algorithms) | [x] | [ ] |
+| Logout/session revocation endpoint | [x] | [ ] |
+| Security-focused authn/authz coverage | [ ] | [ ] |
 
 ## Delivery Roadmap
 
@@ -183,7 +211,7 @@ Status below reflects current source code implementation.
   - [x] Logout (refresh token family revocation)
 - [x] Authorization
 - [ ] Rate Limit
-- [ ] Timeout Increment for Login
+- [x] Timeout Increment for Login
 - [ ] Email
 - [ ] Business Logic
 - [ ] CI/CD

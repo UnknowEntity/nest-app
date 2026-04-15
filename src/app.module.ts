@@ -10,6 +10,8 @@ import { AuthzModule } from './modules/authz/authz.module';
 import { UserModule } from './modules/user/user.module';
 import { ConfigurationInterface } from './configuration/configuration.interface';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CsrfModule } from './csrf/csrf.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { APP_GUARD } from '@nestjs/core';
       inject: [ConfigService],
       imports: [ConfigModule],
     }),
+    CsrfModule,
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     AuthnModule,
     AuthzModule,

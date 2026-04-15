@@ -43,6 +43,11 @@ forgot_password = {secret = "<forgot_password_secret>", expires_in = 1800}
 # max_expires_in: max family lifetime in seconds for token rotation (2592000 = 30 days)
 refresh = {secret = "<refresh_secret>", expires_in = 86400, max_expires_in = 2592000}
 
+# Email verification token settings.
+# secret: Base64 string, minimum 44 chars
+# expires_in: token lifetime in seconds (1800 = 30 minutes)
+email_verification = {secret = "<email_verification_secret>", expires_in = 1800}
+
 [rate_limit]
 # Rate limiting settings for API requests.
 # max_requests_per_window: maximum number of requests allowed per IP address within the time window.
@@ -60,5 +65,7 @@ transport = {host = "<smtp_host>", port = 587, user = "<smtp_user>", pass = "<sm
 
 [general]
 # General application settings.
+# The app name should be a short, human-readable string used in email templates and other user-facing contexts.
+app_name = "<name>"
 # Domain used for constructing URLs in emails (e.g., password reset links).
 domain = "https://<domain>"

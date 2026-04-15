@@ -44,6 +44,10 @@ const AuthSchema = zod.object({
     secret: zod.base64().min(44),
     expires_in: zod.number(),
   }),
+  email_verification: zod.object({
+    secret: zod.base64().min(44),
+    expires_in: zod.number(),
+  }),
 });
 
 const RateLimitSchema = zod.object({
@@ -67,6 +71,7 @@ const SmtpSchema = zod.object({
 // This can be used for things like application domain, feature flags, etc.
 const GeneralConfigSchema = zod.object({
   domain: zod.string().min(1),
+  app_name: zod.string().min(1),
 });
 
 export const ConfigurationData = zod.object({

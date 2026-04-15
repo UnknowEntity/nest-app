@@ -41,7 +41,7 @@ import {
 } from 'src/constants/auth.constant';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailEventConfig, MailEventEnum } from 'src/mail/mail.constant';
-import { ResetPasswordEvent } from 'src/mail/mail.dto';
+import { EmailVerificationEvent, ResetPasswordEvent } from 'src/mail/mail.dto';
 
 dayjs.extend(isSameOrBefore);
 
@@ -199,6 +199,7 @@ export class AuthnService {
       .from(users)
       .where(eq(users.email, dto.email))
       .limit(1)
+      .$withCache()
       .execute();
 
     if (existingUser.length > 0) {
@@ -222,6 +223,13 @@ export class AuthnService {
         role: users.role,
       })
       .execute();
+
+    await this.sendEmailVerification(
+      newUser.id,
+      newUser.email,
+      newUser.name,
+      false,
+    );
 
     return newUser;
   }
@@ -276,6 +284,87 @@ export class AuthnService {
         token,
       }),
     );
+  }
+
+  async sendEmailVerification(
+    userId: number,
+    email: string,
+    name: string,
+    checkVerified = true,
+  ) {
+    if (checkVerified) {
+      const [user] = await this.db
+        .select({
+          id: users.id,
+          verifiedAt: users.verifiedAt,
+        })
+        .from(users)
+        .where(and(eq(users.id, userId), isNull(users.verifiedAt)))
+        .limit(1)
+        .$withCache()
+        .execute();
+
+      if (!user) {
+        return;
+      }
+    }
+    const { secret, expires_in } = this.configService.getOrThrow(
+      'auth.email_verification',
+      {
+        infer: true,
+      },
+    );
+
+    const { algorithms, ...sharedClaims } = this.getTokenSharedClaims();
+
+    const payload = {
+      sub: userId,
+      type: 'email_verification' as const,
+    };
+
+    const token = await this.jwtService.signAsync(payload, {
+      secret,
+      expiresIn: expires_in,
+      ...sharedClaims,
+      algorithm: algorithms[0],
+      jwtid: crypto.randomUUID(),
+    });
+
+    // Fire-and-forget email sending. We don't want to make the user wait if the email service is slow.
+    this.eventEmitter.emit(
+      MailEventConfig[MailEventEnum.EmailVerification].event,
+      new EmailVerificationEvent({
+        name,
+        email,
+        token,
+      }),
+    );
+  }
+
+  async verifyEmail(userId: number) {
+    const [user] = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+      })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.verifiedAt)))
+      .limit(1)
+      .$withCache()
+      .execute();
+
+    if (!user) {
+      return;
+    }
+
+    await this.db
+      .update(users)
+      .set({
+        verifiedAt: getCurrentUnixTimestamp(),
+      })
+      .where(eq(users.id, userId))
+      .execute();
   }
 
   getTokenSharedClaims() {

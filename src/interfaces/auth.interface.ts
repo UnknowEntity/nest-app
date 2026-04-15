@@ -29,6 +29,16 @@ export type ResetPasswordTokenPayload = zod.infer<
   typeof ResetPasswordTokenPayloadSchema
 >;
 
+export const EmailVerificationTokenPayloadSchema = zod.object({
+  sub: zod.number(),
+  jti: zod.string(),
+  type: zod.literal('email_verification'),
+});
+
+export type EmailVerificationTokenPayload = zod.infer<
+  typeof EmailVerificationTokenPayloadSchema
+>;
+
 export type AuthRequest = Request & {
   user: SelectUser;
 };

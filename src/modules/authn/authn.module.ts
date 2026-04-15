@@ -9,6 +9,7 @@ import { AuthnController } from './authn.controller';
 import { ConfigModule } from '@nestjs/config';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtResetPasswordStrategy } from './strategies/jwt-reset-password.strategy';
+import { JwtEmailVerificationStrategy } from './strategies/jwt-email-verification.strategy';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { JwtResetPasswordStrategy } from './strategies/jwt-reset-password.strate
     JwtAccessStrategy,
     JwtRefreshStrategy,
     JwtResetPasswordStrategy,
+    JwtEmailVerificationStrategy,
   ],
   controllers: [AuthnController],
 })

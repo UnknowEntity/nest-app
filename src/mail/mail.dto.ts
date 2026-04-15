@@ -17,3 +17,23 @@ export class ResetPasswordEvent {
     this.token = token;
   }
 }
+
+export class EmailVerificationEvent {
+  name: string;
+  email: string;
+  token: string;
+
+  constructor({
+    name,
+    email,
+    token,
+  }: {
+    name: string;
+    email: string;
+    token: string;
+  }) {
+    this.name = name;
+    this.email = email;
+    this.token = token;
+  }
+}

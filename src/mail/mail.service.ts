@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ResetPasswordEvent } from './mail.dto';
+import { EmailVerificationEvent, ResetPasswordEvent } from './mail.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   FORMAT_SUBJECT_PATTERN,
@@ -12,15 +12,19 @@ import {
   GeneralConfig,
 } from 'src/configuration/configuration.interface';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from 'winston';
+import { MasterLogger } from 'src/logger/logger';
 
 @Injectable()
 export class MailService {
   generalConfig: GeneralConfig;
+  logger: Logger;
   constructor(
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService<ConfigurationInterface>,
   ) {
     this.generalConfig = this.configService.get('general', { infer: true })!;
+    this.logger = MasterLogger.child({ label: 'MailService' });
   }
 
   async sendResetPasswordEmail(event: ResetPasswordEvent) {
@@ -31,11 +35,20 @@ export class MailService {
     });
   }
 
+  async sendEmailVerificationEmail(event: EmailVerificationEvent) {
+    const { email, token, name } = event;
+    await this.sendMail(email, MailEventEnum.EmailVerification, {
+      token: encodeURIComponent(token),
+      name,
+    });
+  }
+
   private async sendMail(
     to: string,
     type: MailEventEnum,
     context: Record<string, any>,
   ) {
+    this.logger.info(`Sending ${type} email to ${to}`);
     let subject = MailEventConfig[type].subject;
     const template = MailEventConfig[type].template;
 
@@ -50,6 +63,7 @@ export class MailService {
       context: {
         ...context,
         domain: this.generalConfig.domain,
+        app_name: this.generalConfig.app_name,
       },
     });
   }

@@ -23,9 +23,9 @@ ssl = false
 
 [auth]
 # Shared JWT claim settings for access and refresh tokens.
-issuer = "kubernetes-node"
-audience = "kubernetes-node-api"
 algorithms = ["HS256"]
+audience = "kubernetes-node-api"
+issuer = "kubernetes-node"
 
 # Access token settings (used for API authentication).
 # secret: Base64 string, minimum 44 chars (validated by schema)

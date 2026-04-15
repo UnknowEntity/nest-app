@@ -1,3 +1,4 @@
+import { SetMetadata } from '@nestjs/common';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { RequestUser } from 'src/database/schema';
 
@@ -23,3 +24,9 @@ export const Token = createParamDecorator(
     return token;
   },
 );
+
+export const SKIP_AUTHZ = 'skip_authz';
+export const SkipAuthzDecorator = () => SetMetadata(SKIP_AUTHZ, true);
+
+export const SKIP_AUTHN = 'skip_authn';
+export const SkipAuthnDecorator = () => SetMetadata(SKIP_AUTHN, true);

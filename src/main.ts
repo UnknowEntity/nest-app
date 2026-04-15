@@ -9,6 +9,8 @@ import { doubleCsrf } from 'csrf-csrf';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import cookieParser = require('cookie-parser');
 import { isProduction } from './utils/app.util';
+import { CsrfExceptionFilter } from './exception-filters/csrf.exception-filter';
+import { InternalExceptionFilter } from './exception-filters/internal.exception-filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,14 +28,17 @@ async function bootstrap() {
     },
   });
 
-  app.useGlobalFilters(
-    new HttpExceptionFilter(),
-    new ValidationExceptionFilter(),
-  );
   app.use(helmet());
   app.use(cookieParser());
   app.use(doubleCsrfProtection);
   app.enableCors();
+
+  app.useGlobalFilters(
+    new InternalExceptionFilter(),
+    new CsrfExceptionFilter(),
+    new HttpExceptionFilter(),
+    new ValidationExceptionFilter(),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }

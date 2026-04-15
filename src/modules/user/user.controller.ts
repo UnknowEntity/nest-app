@@ -1,12 +1,11 @@
 import { Body, Controller, Post, UseGuards, UsePipes } from '@nestjs/common';
 import { ZodValidationPipe } from 'src/pipes/validation.pipe';
 import { ReqCreateUserDto, ReqCreateUserSchema } from './user.dto';
-import { AuthzGuard } from '../authz/authz.guard';
 import { UserService } from './user.service';
-import { JwtAccessGuard } from '../authn/guards/jwt-access.guard';
+import { EmailVerifiedGuard } from '../authn/guards/email-verified.guard';
 
 @Controller('users')
-@UseGuards(JwtAccessGuard, AuthzGuard)
+@UseGuards(EmailVerifiedGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

@@ -10,9 +10,13 @@ import {
 } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local.guard';
 import { AuthnService } from './authn.service';
-import { Token, User } from 'src/decorators/auth.decorator';
+import {
+  SkipAuthnDecorator,
+  SkipAuthzDecorator,
+  Token,
+  User,
+} from 'src/decorators/auth.decorator';
 import { RequestUser } from 'src/database/schema';
-import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import {
   RefreshRequestUser,
@@ -29,10 +33,12 @@ import { AuthnThrottleConfig } from 'src/constants/auth.constant';
 import { JwtResetPasswordGuard } from './guards/jwt-reset-password.guard';
 import { JwtEmailVerificationGuard } from './guards/jwt-email-verification.guard';
 
+@SkipAuthzDecorator()
 @Controller('auth')
 export class AuthnController {
   constructor(private readonly authService: AuthnService) {}
 
+  @SkipAuthnDecorator()
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: AuthnThrottleConfig })
   @UseGuards(LocalAuthGuard)
@@ -41,18 +47,19 @@ export class AuthnController {
     return this.authService.login(user);
   }
 
-  @UseGuards(JwtAccessGuard)
   @Get('profile')
   profile(@User() user: RequestUser) {
     return user;
   }
 
+  @SkipAuthnDecorator()
   @UseGuards(JwtRefreshGuard)
   @Get('refresh')
   refresh(@User() user: RefreshRequestUser, @Token() token: string) {
     return this.authService.refresh(user, token, user.familyId);
   }
 
+  @SkipAuthnDecorator()
   @Post('signup')
   @UsePipes(new ZodValidationPipe(ReqSignUpSchema))
   signup(@Body() body: ReqSignUpDto) {
@@ -60,6 +67,7 @@ export class AuthnController {
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAuthnDecorator()
   @UseGuards(JwtRefreshGuard)
   @Get('logout')
   logout(@User() user: RefreshRequestUser) {
@@ -67,6 +75,7 @@ export class AuthnController {
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAuthnDecorator()
   @Post('forgot-password')
   @UsePipes(new ZodValidationPipe(ReqForgotPasswordSchema))
   forgotPassword(@Body() body: ReqForgotPasswordDto) {
@@ -74,6 +83,7 @@ export class AuthnController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @SkipAuthnDecorator()
   @Post('reset-password')
   @UseGuards(JwtResetPasswordGuard)
   @UsePipes(new ZodValidationPipe(ReqResetPasswordSchema))
@@ -91,7 +101,6 @@ export class AuthnController {
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Get('resend-verification-email')
-  @UseGuards(JwtAccessGuard)
   async resendVerificationEmail(@User() user: RefreshRequestUser) {
     await this.authService.sendEmailVerification(
       user.id,
@@ -101,6 +110,7 @@ export class AuthnController {
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SkipAuthnDecorator()
   @Get('verify-email')
   @UseGuards(JwtEmailVerificationGuard)
   async verifyEmail(@User() user: RefreshRequestUser) {

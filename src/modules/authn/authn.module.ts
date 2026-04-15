@@ -10,6 +10,8 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtResetPasswordStrategy } from './strategies/jwt-reset-password.strategy';
 import { JwtEmailVerificationStrategy } from './strategies/jwt-email-verification.strategy';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAccessGuard } from './guards/jwt-access.guard';
 
 @Module({
   imports: [
@@ -30,6 +32,10 @@ import { JwtEmailVerificationStrategy } from './strategies/jwt-email-verificatio
     JwtRefreshStrategy,
     JwtResetPasswordStrategy,
     JwtEmailVerificationStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAccessGuard,
+    },
   ],
   controllers: [AuthnController],
 })

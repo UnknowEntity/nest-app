@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -72,4 +73,8 @@ export class AccountLockedError extends UnauthorizedException {
       `Account is locked. Please try again after ${remainingLockoutSeconds} seconds.`,
     );
   }
+}
+
+export class EmailNotVerifiedError extends ForbiddenException {
+  code = 'EMAIL_NOT_VERIFIED';
 }

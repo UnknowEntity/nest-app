@@ -26,11 +26,11 @@ import { isProduction } from 'src/utils/app.util';
         const database = drizzle({
           connection: {
             connectionString: databaseConfig.connection_string,
-            ssl: databaseConfig.ssl || false,
+            ssl: isProduction() ? true : databaseConfig.ssl || false,
           },
           cache: new GlobalCache(
             databaseConfig.redis_connection_string,
-            false,
+            isProduction(),
             databaseConfig.cache_ttl_ms,
           ),
         });

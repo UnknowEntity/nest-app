@@ -17,7 +17,14 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
   app.use(doubleCsrfProtection);
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+    ],
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
+  });
 
   app.useGlobalFilters(
     new InternalExceptionFilter(),

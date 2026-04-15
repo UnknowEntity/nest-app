@@ -177,6 +177,7 @@ Status below reflects current source code implementation.
 - [x] HTTP hardening middleware (Helmet, strict CORS policy)
 - [x] JWT claim hardening (issuer, audience, allowed algorithms)
 - [x] Explicit logout/revocation endpoint for active refresh token/session
+- [x] Health readiness and liveness check API
 - [ ] Security-focused test coverage for authn/authz paths
 
 ## Test Checklist (Per Security Part)

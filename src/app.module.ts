@@ -13,6 +13,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CsrfModule } from './csrf/csrf.module';
+import { CacheService } from './cache/cache.service';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { CsrfModule } from './csrf/csrf.module';
     AuthzModule,
     UserModule,
     MailModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [
@@ -52,6 +55,7 @@ import { CsrfModule } from './csrf/csrf.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    CacheService,
   ],
 })
 export class AppModule {}

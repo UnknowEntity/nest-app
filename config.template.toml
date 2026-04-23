@@ -19,7 +19,14 @@ connection_string = "postgresql://<username>:<password>@localhost:5432/<database
 ssl = false
 
 # Cache TTL in milliseconds for Drizzle query caching (default: 60000 = 1 minute).
-# cache_ttl_ms = 60000
+cache_ttl_ms = 60000
+
+[cache]
+# Cache TTL in milliseconds for Drizzle query caching (default: 60000 = 1 minute).
+ttl_ms = 60000
+# Redis connection string for caching (used in production).
+# Format: redis://<username>:<password>@<host>:<port>
+connection_string = "redis://<username>:<password>@localhost:6379"
 
 [auth]
 # Shared JWT claim settings for access and refresh tokens.

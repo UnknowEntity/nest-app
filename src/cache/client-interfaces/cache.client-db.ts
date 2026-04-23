@@ -1,12 +1,21 @@
-import { createKeyv } from 'cacheable';
-import { createKeyv as createKeyvRedis } from '@keyv/redis';
-import { createCache, Cache as CacheManager } from 'cache-manager';
+import { Cache as CacheManager } from 'cache-manager';
 import { CacheConfig } from 'drizzle-orm/cache/core/types';
 import { getTableName, Table } from 'drizzle-orm/table';
 import { is } from 'drizzle-orm';
 import { Cache } from 'drizzle-orm/cache/core';
 
-export class GlobalCache extends Cache {
+/**
+ * This class implements a cache client for Drizzle ORM,
+ * allowing you to cache query results and manage cache
+ * invalidation based on the tables involved in the queries.
+ *
+ * It supports both explicit caching (where you specify which queries to cache)
+ * and global caching (where all queries are cached).
+ *
+ * The cache can be backed by an in-memory store or Redis,
+ * depending on the configuration.
+ */
+export class DBCacheClient extends Cache {
   private globalTtl: number;
   private useGlobally: boolean;
 
@@ -27,12 +36,15 @@ export class GlobalCache extends Cache {
 
   private cacheManager: CacheManager;
 
-  constructor(redisString?: string, useGlobally = false, globalTtl = 60_000) {
+  constructor(
+    cacheManager: CacheManager,
+    useGlobally = false,
+    globalTtl = 60_000,
+  ) {
     super();
     this.useGlobally = useGlobally;
     this.globalTtl = globalTtl;
-    const store = redisString ? createKeyvRedis(redisString) : createKeyv();
-    this.cacheManager = createCache(store);
+    this.cacheManager = cacheManager;
   }
   // For the strategy, we have two options:
   // - 'explicit': The cache is used only when .$withCache() is added to a query.
@@ -52,7 +64,7 @@ export class GlobalCache extends Cache {
     if (!isAutoInvalidate) {
       return (
         (await this.cacheManager.get<any[]>(
-          this.toStorageKey(GlobalCache.nonAutoInvalidateTablePrefix, key),
+          this.toStorageKey(DBCacheClient.nonAutoInvalidateTablePrefix, key),
         )) ?? undefined
       );
     }
@@ -93,11 +105,11 @@ export class GlobalCache extends Cache {
 
     if (!isAutoInvalidate) {
       if (isTag) {
-        this.tagsMap.set(key, GlobalCache.nonAutoInvalidateTablePrefix);
+        this.tagsMap.set(key, DBCacheClient.nonAutoInvalidateTablePrefix);
       }
 
       await this.cacheManager.set(
-        this.toStorageKey(GlobalCache.nonAutoInvalidateTablePrefix, key),
+        this.toStorageKey(DBCacheClient.nonAutoInvalidateTablePrefix, key),
         response,
         ttl,
       );
@@ -200,11 +212,11 @@ export class GlobalCache extends Cache {
   }
 
   private addTablePrefix(table: string): string {
-    return `${GlobalCache.compositeTableSetPrefix}${table}`;
+    return `${DBCacheClient.compositeTableSetPrefix}${table}`;
   }
 
   private getCompositeKey(tables: string[]): string {
-    return `${GlobalCache.compositeTablePrefix}${[...tables].sort().join(',')}`;
+    return `${DBCacheClient.compositeTablePrefix}${[...tables].sort().join(',')}`;
   }
 
   private toStorageKey(bucket: string, key: string): string {

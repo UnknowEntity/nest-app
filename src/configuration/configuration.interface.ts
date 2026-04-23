@@ -7,8 +7,7 @@ const AppConfigSchema = zod.object({
 const DatabaseSchema = zod.object({
   connection_string: zod.string(),
   ssl: zod.boolean().optional(),
-  redis_connection_string: zod.string().optional(),
-  cache_ttl_ms: zod.number().int().positive().optional(),
+  cache_ttl_ms: zod.number().int().positive(),
 });
 
 const JwtAlgorithmSchema = zod.enum([
@@ -66,6 +65,11 @@ const SmtpSchema = zod.object({
   from_name: zod.string().optional(),
 });
 
+const CacheConfigSchema = zod.object({
+  ttl_ms: zod.number().int().positive(),
+  connection_string: zod.string().optional(),
+});
+
 // General configuration that doesn't fit into other categories
 // Do not include sensitive information here
 // This can be used for things like application domain, feature flags, etc.
@@ -77,6 +81,7 @@ const GeneralConfigSchema = zod.object({
 export const ConfigurationData = zod.object({
   app: AppConfigSchema,
   database: DatabaseSchema,
+  cache: CacheConfigSchema,
   auth: AuthSchema,
   rate_limit: RateLimitSchema,
   smtp: SmtpSchema,

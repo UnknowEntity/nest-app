@@ -63,6 +63,7 @@ const SmtpSchema = zod.object({
   }),
   from_address: zod.email(),
   from_name: zod.string().optional(),
+  retry_attempts: zod.number().int().nonnegative().default(3),
 });
 
 const CacheConfigSchema = zod.object({

@@ -68,6 +68,7 @@ ttl_seconds = 3600 # Time window for rate limiting (3600 = 1 hour)
 # SMTP configuration for sending emails (e.g., password reset emails).
 from_address = "<from_address>"
 from_name = "<from_name>"
+retry_attempts = 3
 transport = {host = "<smtp_host>", port = 587, user = "<smtp_user>", pass = "<smtp_pass>"}
 
 [general]

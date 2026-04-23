@@ -19,12 +19,16 @@ import { MasterLogger } from 'src/logger/logger';
 export class MailService {
   generalConfig: GeneralConfig;
   logger: Logger;
+  retryAttempts: number;
   constructor(
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService<ConfigurationInterface>,
   ) {
     this.generalConfig = this.configService.get('general', { infer: true })!;
     this.logger = MasterLogger.child({ label: 'MailService' });
+    this.retryAttempts = this.configService.getOrThrow('smtp.retry_attempts', {
+      infer: true,
+    });
   }
 
   async sendResetPasswordEmail(event: ResetPasswordEvent) {
@@ -56,16 +60,40 @@ export class MailService {
       subject = this.formatSubject(subject, context);
     }
 
-    await this.mailerService.sendMail({
-      to,
-      subject,
-      template,
-      context: {
-        ...context,
-        domain: this.generalConfig.domain,
-        app_name: this.generalConfig.app_name,
-      },
-    });
+    let sendSuccess = false;
+    let attempt = 0;
+
+    while (!sendSuccess && attempt < this.retryAttempts) {
+      try {
+        await this.mailerService.sendMail({
+          to,
+          subject,
+          template,
+          context: {
+            ...context,
+            domain: this.generalConfig.domain,
+            app_name: this.generalConfig.app_name,
+          },
+        });
+
+        sendSuccess = true;
+        this.logger.info(`Successfully sent ${type} email to ${to}`);
+      } catch (error) {
+        this.logger.error(`Failed to send ${type} email to ${to}`, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        attempt++;
+        if (attempt < this.retryAttempts) {
+          this.logger.info(
+            `Retrying to send ${type} email to ${to} (Attempt ${attempt + 1})`,
+          );
+        } else {
+          this.logger.error(
+            `Exceeded retry attempts for sending ${type} email to ${to}`,
+          );
+        }
+      }
+    }
   }
 
   private formatSubject(subject: string, context: Record<string, any>): string {

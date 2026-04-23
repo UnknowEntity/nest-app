@@ -29,7 +29,10 @@ import {
 } from './authn.dto';
 import { ZodValidationPipe } from 'src/pipes/validation.pipe';
 import { Throttle } from '@nestjs/throttler';
-import { AuthnThrottleConfig } from 'src/constants/auth.constant';
+import {
+  AuthnThrottleConfig,
+  ForgotPasswordThrottleConfig,
+} from 'src/constants/auth.constant';
 import { JwtResetPasswordGuard } from './guards/jwt-reset-password.guard';
 import { JwtEmailVerificationGuard } from './guards/jwt-email-verification.guard';
 
@@ -76,6 +79,7 @@ export class AuthnController {
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @SkipAuthnDecorator()
+  @Throttle({ default: ForgotPasswordThrottleConfig })
   @Post('forgot-password')
   @UsePipes(new ZodValidationPipe(ReqForgotPasswordSchema))
   forgotPassword(@Body() body: ReqForgotPasswordDto) {

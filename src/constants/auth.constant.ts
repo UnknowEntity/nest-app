@@ -47,3 +47,10 @@ export const AuthnThrottleConfig = {
   // Allow max 5 login attempts within the window before throttling
   limit: 5,
 };
+
+export const ForgotPasswordThrottleConfig = {
+  // 1 hour window for forgot password attempts
+  ttl: 60 * 60,
+  // Allow max 5 forgot password attempts within the window before throttling
+  limit: 5,
+};

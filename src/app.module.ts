@@ -22,7 +22,10 @@ import { CacheModule } from './cache/cache.module';
       load: [configuration],
     }),
     ThrottlerModule.forRootAsync({
-      useFactory: (configService: ConfigService<ConfigurationInterface>) => {
+      useFactory: (
+        configService: ConfigService<ConfigurationInterface>,
+        cacheService: CacheService,
+      ) => {
         const rate_limit = configService.getOrThrow('rate_limit', {
           infer: true,
         });
@@ -34,10 +37,11 @@ import { CacheModule } from './cache/cache.module';
               limit: rate_limit.max_requests_per_window,
             },
           ],
+          storage: cacheService.getOrCreateThrottleClient(),
         };
       },
-      inject: [ConfigService],
-      imports: [ConfigModule],
+      inject: [ConfigService, CacheService],
+      imports: [ConfigModule, CacheModule],
     }),
     CsrfModule,
     EventEmitterModule.forRoot(),

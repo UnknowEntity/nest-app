@@ -5,6 +5,7 @@ import { ConfigurationInterface } from 'src/configuration/configuration.interfac
 import { createKeyv } from 'cacheable';
 import { createKeyv as createKeyvRedis } from '@keyv/redis';
 import { DBCacheClient } from './client-interfaces/cache.client-db';
+import { ThrottleCacheClient } from './client-interfaces/cache.client-throttle';
 import { isProduction } from 'src/utils/app.util';
 import { startupLogger } from 'src/logger/logger';
 
@@ -12,6 +13,7 @@ import { startupLogger } from 'src/logger/logger';
 export class CacheService {
   private cacheManager: CacheManager;
   private dbClient: DBCacheClient | null = null;
+  private throttleClient: ThrottleCacheClient | null = null;
 
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
@@ -43,5 +45,13 @@ export class CacheService {
       );
     }
     return this.dbClient;
+  }
+
+  getOrCreateThrottleClient(): ThrottleCacheClient {
+    if (!this.throttleClient) {
+      this.throttleClient = new ThrottleCacheClient(this.cacheManager);
+    }
+
+    return this.throttleClient;
   }
 }

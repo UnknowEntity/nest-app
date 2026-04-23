@@ -30,6 +30,12 @@ export class AuthzGuard implements CanActivate {
     const object = request.url;
     const action = request.method;
     const subject = request.user.role;
+
+    // Ensure the user is verified before checking permissions
+    if (!request.user.verifiedAt) {
+      return false;
+    }
+
     const isValid = await this.authzService.enforce(subject, object, action);
 
     if (!isValid) {

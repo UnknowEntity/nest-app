@@ -8,9 +8,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { isProduction } from 'src/utils/app.util';
 import { CacheModule } from 'src/cache/cache.module';
 import { CacheService } from 'src/cache/cache.service';
+import { DatabaseHealthService } from './database-health.service';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
-  imports: [ConfigModule, CacheModule],
+  imports: [ConfigModule, CacheModule, TerminusModule],
   providers: [
     {
       provide: DatabaseService,
@@ -53,7 +55,8 @@ import { CacheService } from 'src/cache/cache.service';
         return database;
       },
     },
+    DatabaseHealthService,
   ],
-  exports: [DatabaseService],
+  exports: [DatabaseService, DatabaseHealthService],
 })
 export class DatabaseModule {}

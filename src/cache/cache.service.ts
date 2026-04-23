@@ -7,16 +7,20 @@ import { createKeyv as createKeyvRedis } from '@keyv/redis';
 import { DBCacheClient } from './client-interfaces/cache.client-db';
 import { ThrottleCacheClient } from './client-interfaces/cache.client-throttle';
 import { isProduction } from 'src/utils/app.util';
-import { startupLogger } from 'src/logger/logger';
+import { MasterLogger, startupLogger } from 'src/logger/logger';
+import { HealthIndicatorService } from '@nestjs/terminus';
+import { Logger } from 'winston';
 
 @Injectable()
 export class CacheService {
   private cacheManager: CacheManager;
   private dbClient: DBCacheClient | null = null;
   private throttleClient: ThrottleCacheClient | null = null;
+  private logger: Logger;
 
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
+    private readonly health: HealthIndicatorService,
   ) {
     const connectionString = this.configService.get<string>('cache.redis_url', {
       infer: true,
@@ -34,6 +38,8 @@ export class CacheService {
       ? createKeyvRedis(connectionString)
       : createKeyv();
     this.cacheManager = createCache(store);
+
+    this.logger = MasterLogger.child({ label: CacheService.name });
   }
 
   getOrCreateDBClient(useGlobally = false, globalTtl = 60_000): DBCacheClient {
@@ -53,5 +59,22 @@ export class CacheService {
     }
 
     return this.throttleClient;
+  }
+
+  async isHealthy() {
+    const indicator = this.health.check('cache');
+    try {
+      await this.cacheManager.set('health_check', 'ok', 5000);
+
+      const value = await this.cacheManager.get('health_check');
+      return value === 'ok'
+        ? indicator.up()
+        : indicator.down({ cache: 'Unexpected value from cache' });
+    } catch (error) {
+      this.logger.error('Cache health check failed', {
+        error: error as unknown,
+      });
+      return indicator.down({ cache: 'Failed to connect to cache' });
+    }
   }
 }

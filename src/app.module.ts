@@ -15,6 +15,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CsrfModule } from './csrf/csrf.module';
 import { CacheService } from './cache/cache.service';
 import { CacheModule } from './cache/cache.module';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CacheModule } from './cache/cache.module';
     UserModule,
     MailModule,
     CacheModule,
+    TerminusModule,
   ],
   controllers: [AppController],
   providers: [

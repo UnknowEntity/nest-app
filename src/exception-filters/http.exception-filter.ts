@@ -3,6 +3,7 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MasterLogger } from 'src/logger/logger';
@@ -20,6 +21,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
+
+    if (
+      exception instanceof ServiceUnavailableException &&
+      request.path === '/health'
+    ) {
+      // For health check endpoint, return a simple 503 without logging the stack trace
+      return response.status(503).json({
+        statusCode: 503,
+        timestamp: new Date().toISOString(),
+        data: exception.getResponse(),
+      });
+    }
 
     const code = 'code' in exception ? exception.code : null;
 

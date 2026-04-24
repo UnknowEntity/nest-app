@@ -13,12 +13,15 @@ import {
   JwtInvalidError,
   UserIdNotFoundError,
 } from 'src/interfaces/error.interface';
+import { Logger } from 'winston';
+import { MasterLogger } from 'src/logger/logger';
 
 @Injectable()
 export class JwtResetPasswordStrategy extends PassportStrategy(
   Strategy,
   JWT_RESET_PASSWORD_STRATEGY_NAME,
 ) {
+  logger: Logger;
   constructor(
     private readonly configService: ConfigService<ConfigurationInterface>,
     private readonly authnService: AuthnService,
@@ -31,12 +34,16 @@ export class JwtResetPasswordStrategy extends PassportStrategy(
       }),
       ...authnService.getTokenSharedClaims(),
     });
+    this.logger = MasterLogger.child({ label: JwtResetPasswordStrategy.name });
   }
 
   async validate(payload: ResetPasswordTokenPayload) {
     const result = ResetPasswordTokenPayloadSchema.safeParse(payload);
 
     if (!result.success) {
+      this.logger.warn(
+        `Invalid JWT payload for password reset: ${result.error}`,
+      );
       throw new JwtInvalidError();
     }
 
@@ -45,6 +52,7 @@ export class JwtResetPasswordStrategy extends PassportStrategy(
     const user = await this.authnService.getUserById(claims.sub);
 
     if (!user) {
+      this.logger.warn(`User ID ${claims.sub} not found for password reset`);
       throw new UserIdNotFoundError();
     }
 

@@ -42,17 +42,22 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailEventConfig, MailEventEnum } from 'src/mail/mail.constant';
 import { EmailVerificationEvent, ResetPasswordEvent } from 'src/mail/mail.dto';
+import { Logger } from 'winston';
+import { MasterLogger } from 'src/logger/logger';
 
 dayjs.extend(isSameOrBefore);
 
 @Injectable()
 export class AuthnService {
+  logger: Logger;
   constructor(
     private readonly db: DatabaseService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<ConfigurationInterface>,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) {
+    this.logger = MasterLogger.child({ label: AuthnService.name });
+  }
 
   async validateUser(
     email: string,
@@ -66,11 +71,17 @@ export class AuthnService {
       .execute();
 
     if (!user) {
+      this.logger.warn(
+        `Failed login attempt with non-existent email: ${email}`,
+      );
       return null;
     }
 
     // Check for lockout before validating password.
     if (user.lockoutUntil && user.lockoutUntil > getCurrentUnixTimestamp()) {
+      this.logger.warn(
+        `Account locked for user ${user.id} until ${user.lockoutUntil}`,
+      );
       throw new AccountLockedError(
         user.lockoutUntil - getCurrentUnixTimestamp(),
       );
@@ -80,10 +91,14 @@ export class AuthnService {
 
     if (!isPasswordValid) {
       await this.updateFailedLoginAttempts(user.id, user.signInAttempts ?? 0);
+      this.logger.warn(`Failed login attempt for user ${user.id}`);
 
       // If the failed attempt has just reached the lockout threshold,
       // throw a warning error to indicate there one more failed attempt will lock the account.
       if (user.signInAttempts === DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT - 1) {
+        this.logger.warn(
+          `User ${user.id} is one failed attempt away from lockout`,
+        );
         throw new AccountLockedWarningError();
       }
 
@@ -110,6 +125,8 @@ export class AuthnService {
         .where(eq(users.id, user.id))
         .execute();
     }
+
+    this.logger.info(`User ${user.id} logged in successfully`);
 
     return result;
   }
@@ -231,6 +248,10 @@ export class AuthnService {
       false,
     );
 
+    this.logger.info(
+      `New user registered with id ${newUser.id} and email ${newUser.email}`,
+    );
+
     return newUser;
   }
 
@@ -261,6 +282,9 @@ export class AuthnService {
     // To prevent email enumeration, we return early even if the user doesn't exist.
     // No error is thrown and the response is the same regardless of whether the email exists or not.
     if (!user) {
+      this.logger.warn(
+        `Password reset requested for non-existent email: ${dto.email}`,
+      );
       return;
     }
 
@@ -274,6 +298,10 @@ export class AuthnService {
         expiresAt,
       })
       .execute();
+
+    this.logger.info(
+      `Password reset token created for user ${user.id} with email ${user.email}`,
+    );
 
     // Fire-and-forget email sending. We don't want to make the user wait if the email service is slow.
     this.eventEmitter.emit(
@@ -339,6 +367,7 @@ export class AuthnService {
         token,
       }),
     );
+    this.logger.info(`Email verification sent to ${email} for user ${userId}`);
   }
 
   async verifyEmail(userId: number) {
@@ -355,6 +384,9 @@ export class AuthnService {
       .execute();
 
     if (!user) {
+      this.logger.warn(
+        `Email verification attempted for already verified or non-existent user: ${userId}`,
+      );
       return;
     }
 
@@ -365,6 +397,8 @@ export class AuthnService {
       })
       .where(eq(users.id, userId))
       .execute();
+
+    this.logger.info(`Email verified for user ${userId}`);
   }
 
   getTokenSharedClaims() {
@@ -424,16 +458,25 @@ export class AuthnService {
       .execute();
 
     if (!resetToken) {
+      this.logger.warn(
+        `Invalid password reset attempt for user ${userId} with missing token`,
+      );
       throw new TokenNotFoundError();
     }
 
     const isTokenValid = await Scrypt.verify(token, resetToken.hashToken);
 
     if (!isTokenValid) {
+      this.logger.warn(
+        `Invalid password reset attempt for user ${userId} with invalid token`,
+      );
       throw new InvalidResetTokenError();
     }
 
     if (resetToken.usedAt) {
+      this.logger.warn(
+        `Password reset token reuse detected for user ${userId}`,
+      );
       throw new TokenReuseDetectedError();
     }
 
@@ -455,6 +498,9 @@ export class AuthnService {
         .execute();
 
       if (!updateToken) {
+        this.logger.warn(
+          `Password reset token reuse detected for user ${userId} in transaction`,
+        );
         throw new TokenReuseDetectedError();
       }
 
@@ -473,6 +519,8 @@ export class AuthnService {
         .delete(refreshTokens)
         .where(eq(refreshTokens.userId, userId))
         .execute();
+
+      this.logger.info(`Password reset successfully for user ${userId}`);
     });
   }
 
@@ -502,6 +550,7 @@ export class AuthnService {
   }: CreateRefreshTokenDto) {
     // New family: create a fresh token
     if (!withFamily) {
+      this.logger.info(`Creating new refresh token for user ${userId}`);
       return this.generateAndStoreNewToken(userId, crypto.randomUUID());
     }
 
@@ -516,6 +565,9 @@ export class AuthnService {
     }
 
     // Latest token reuse (inside or outside grace period): rotate to a new token.
+    this.logger.info(
+      `Rotating refresh token for user ${userId}, current family ${withFamily.id}`,
+    );
     return this.generateAndStoreNewToken(userId, withFamily.id);
   }
 
@@ -530,12 +582,18 @@ export class AuthnService {
 
     // Family doesn't exist
     if (!latestTokenData) {
+      this.logger.warn(
+        `Refresh token family invalid for user ${userId}, family ${withFamily.id}`,
+      );
       await this.removeRefreshTokenFamily(userId, withFamily.id);
       throw new RefreshTokenFamilyInvalidError();
     }
 
     // Check if family has exceeded max age
     if (getCurrentUnixTimestamp() > latestTokenData.maxExpiresAt) {
+      this.logger.warn(
+        `Refresh token family max age exceeded for user ${userId}, family ${withFamily.id}`,
+      );
       await this.removeRefreshTokenFamily(userId, withFamily.id);
       throw new RefreshTokenMaxAgeExceededError();
     }
@@ -548,6 +606,9 @@ export class AuthnService {
 
     // Token mismatch outside grace period = potential compromise (replay attack)
     if (!withinGracePeriod && !isLatestToken) {
+      this.logger.warn(
+        `Potential refresh token compromise detected for user ${userId}, family ${withFamily.id}`,
+      );
       await this.removeRefreshTokenFamily(userId, withFamily.id);
       throw new RefreshTokenFamilyInvalidError();
     }
@@ -632,5 +693,8 @@ export class AuthnService {
         ),
       )
       .execute();
+    this.logger.info(
+      `Removed refresh token family for user ${userId}, family ${familyId}`,
+    );
   }
 }

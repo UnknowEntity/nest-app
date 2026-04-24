@@ -30,8 +30,13 @@ import {
 import { ZodValidationPipe } from 'src/pipes/validation.pipe';
 import { Throttle } from '@nestjs/throttler';
 import {
-  AuthnThrottleConfig,
+  LoginThrottleConfig,
   ForgotPasswordThrottleConfig,
+  RefreshThrottleConfig,
+  SignupThrottleConfig,
+  ResetPasswordThrottleConfig,
+  ResendVerificationEmailThrottleConfig,
+  VerifyEmailThrottleConfig,
 } from 'src/constants/auth.constant';
 import { JwtResetPasswordGuard } from './guards/jwt-reset-password.guard';
 import { JwtEmailVerificationGuard } from './guards/jwt-email-verification.guard';
@@ -43,7 +48,7 @@ export class AuthnController {
 
   @SkipAuthnDecorator()
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: AuthnThrottleConfig })
+  @Throttle({ default: LoginThrottleConfig })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   login(@User() user: RequestUser) {
@@ -57,6 +62,7 @@ export class AuthnController {
 
   @SkipAuthnDecorator()
   @UseGuards(JwtRefreshGuard)
+  @Throttle({ default: RefreshThrottleConfig })
   @Get('refresh')
   refresh(@User() user: RefreshRequestUser, @Token() token: string) {
     return this.authService.refresh(user, token, user.familyId);
@@ -64,6 +70,7 @@ export class AuthnController {
 
   @SkipAuthnDecorator()
   @Post('signup')
+  @Throttle({ default: SignupThrottleConfig })
   @UsePipes(new ZodValidationPipe(ReqSignUpSchema))
   signup(@Body() body: ReqSignUpDto) {
     return this.authService.signup(body);
@@ -90,6 +97,7 @@ export class AuthnController {
   @SkipAuthnDecorator()
   @Post('reset-password')
   @UseGuards(JwtResetPasswordGuard)
+  @Throttle({ default: ResetPasswordThrottleConfig })
   @UsePipes(new ZodValidationPipe(ReqResetPasswordSchema))
   async resetPassword(
     @User() user: RefreshRequestUser,
@@ -105,6 +113,7 @@ export class AuthnController {
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Get('resend-verification-email')
+  @Throttle({ default: ResendVerificationEmailThrottleConfig })
   async resendVerificationEmail(@User() user: RefreshRequestUser) {
     await this.authService.sendEmailVerification(
       user.id,
@@ -117,6 +126,7 @@ export class AuthnController {
   @SkipAuthnDecorator()
   @Get('verify-email')
   @UseGuards(JwtEmailVerificationGuard)
+  @Throttle({ default: VerifyEmailThrottleConfig })
   async verifyEmail(@User() user: RefreshRequestUser) {
     await this.authService.verifyEmail(user.id);
   }

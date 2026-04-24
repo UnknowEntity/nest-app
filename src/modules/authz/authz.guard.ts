@@ -33,6 +33,16 @@ export class AuthzGuard implements CanActivate {
 
     // Ensure the user is verified before checking permissions
     if (!request.user.verifiedAt) {
+      this.authzLogger.warn(
+        `Access denied for unverified user ${request.user.email} on ${object} with action ${action}`,
+        {
+          path: request.path,
+          method: request.method,
+          userRole: subject,
+          email: request.user.email,
+        },
+      );
+
       return false;
     }
 

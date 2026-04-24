@@ -42,3 +42,7 @@ export type EmailVerificationTokenPayload = zod.infer<
 export type AuthRequest = Request & {
   user: SelectUser;
 };
+
+export type RefreshRequest = Request & {
+  user: SelectUser & { familyId: string };
+};

@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import configuration from './configuration/configuration';
 import { AuthnModule } from './modules/authn/authn.module';
 import { AuthzModule } from './modules/authz/authz.module';
@@ -34,7 +34,7 @@ import { TerminusModule } from '@nestjs/terminus';
         return {
           throttlers: [
             {
-              ttl: rate_limit.ttl_seconds * 1000, // Convert seconds to milliseconds
+              ttl: seconds(rate_limit.ttl_seconds), // Convert seconds to milliseconds
               limit: rate_limit.max_requests_per_window,
             },
           ],

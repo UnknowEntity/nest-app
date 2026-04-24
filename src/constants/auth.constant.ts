@@ -1,4 +1,8 @@
+import { minutes } from '@nestjs/throttler';
+import { ThrottleConfig } from 'src/interfaces/app.interface';
+import { ThrottleKeyFactory } from 'src/utils/security.util';
 import * as zod from 'zod';
+
 export const LOCAL_STRATEGY_NAME = 'local';
 export const JWT_ACCESS_STRATEGY_NAME = 'jwt-access';
 export const JWT_REFRESH_STRATEGY_NAME = 'jwt-refresh';
@@ -41,16 +45,83 @@ export const PASSWORD_POLICY = zod
 export const DEFAULT_SIGNIN_ATTEMPTS_BEFORE_LOCKOUT = 5;
 export const DEFAULT_LOCKOUT_DURATION_SECONDS = 15 * 60;
 
-export const AuthnThrottleConfig = {
+export const LoginThrottleConfig: ThrottleConfig = {
   // 15 minutes window for login attempts
-  ttl: 15 * 60,
+  ttl: minutes(15),
   // Allow max 5 login attempts within the window before throttling
   limit: 5,
+  generateKey: ThrottleKeyFactory.init('login')
+    .addPerEmailInBody()
+    .addPerIP()
+    .buildGenerateKeyFunction(),
 };
 
-export const ForgotPasswordThrottleConfig = {
+export const ForgotPasswordThrottleConfig: ThrottleConfig = {
   // 1 hour window for forgot password attempts
-  ttl: 60 * 60,
+  ttl: minutes(60),
   // Allow max 5 forgot password attempts within the window before throttling
   limit: 5,
+
+  generateKey: ThrottleKeyFactory.init('forgot-password')
+    .addPerEmail()
+    .addPerIP()
+    .buildGenerateKeyFunction(),
+};
+
+export const RefreshThrottleConfig: ThrottleConfig = {
+  // 15 minutes window for refresh attempts
+  ttl: minutes(15),
+  // Allow max 30 refresh attempts within the window before throttling
+  limit: 30,
+
+  generateKey: ThrottleKeyFactory.init('refresh')
+    .addPerFamilyId()
+    .buildGenerateKeyFunction(),
+};
+
+export const SignupThrottleConfig: ThrottleConfig = {
+  // 1 hour window for signup attempts
+  ttl: minutes(60),
+  // Allow max 3 signup attempts within the window before throttling
+  limit: 3,
+
+  generateKey: ThrottleKeyFactory.init('signup')
+    .addPerEmailInBody()
+    .addPerIP()
+    .buildGenerateKeyFunction(),
+};
+
+export const ResetPasswordThrottleConfig: ThrottleConfig = {
+  // 30 minutes window for reset password attempts
+  ttl: minutes(30),
+  // Allow max 5 reset password attempts within the window before throttling
+  limit: 5,
+
+  generateKey: ThrottleKeyFactory.init('reset-password')
+    .addPerToken()
+    .addPerIP()
+    .buildGenerateKeyFunction(),
+};
+
+export const ResendVerificationEmailThrottleConfig: ThrottleConfig = {
+  // 1 hour window for resending verification email attempts
+  ttl: minutes(60),
+  // Allow max 3 resend verification email attempts within the window before throttling
+  limit: 3,
+
+  generateKey: ThrottleKeyFactory.init('resend-verification-email')
+    .addPerEmail()
+    .buildGenerateKeyFunction(),
+};
+
+export const VerifyEmailThrottleConfig: ThrottleConfig = {
+  // 30 minutes window for email verification attempts
+  ttl: minutes(30),
+  // Allow max 10 email verification attempts within the window before throttling
+  limit: 10,
+
+  generateKey: ThrottleKeyFactory.init('verify-email')
+    .addPerToken()
+    .addPerIP()
+    .buildGenerateKeyFunction(),
 };
